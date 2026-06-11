@@ -10,6 +10,7 @@ import draftRoutes from './routes/draftRoutes.js';
 import journalRoutes from './routes/journalRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import tagRoutes from './routes/tagRoutes.js';
+import calendarRoutes from './routes/calendarRoutes.js';
 
 const app = express();
 
@@ -61,6 +62,9 @@ app.use('/api/v1/categories', categoryRoutes);
 
 // Tags APIs
 app.use('/api/v1/tags', tagRoutes);
+
+// Calendar APIs
+app.use('/api/v1/calendar', calendarRoutes);
 
 // Fallback for undefined routes -> throw 404 ApiError
 app.use((req, res, next) => {

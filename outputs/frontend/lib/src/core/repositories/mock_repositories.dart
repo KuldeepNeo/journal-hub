@@ -189,9 +189,64 @@ class MockJournalRepository extends JournalRepository {
     )
   ];
 
-  Future<List<JournalEntry>> getEntries() async {
+  @override
+  Future<List<JournalEntry>> getEntries({
+    String? keyword,
+    String? categoryId,
+    String? tagId,
+    DateTime? startDate,
+    DateTime? endDate,
+    int? page,
+    int? limit,
+  }) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    return List.from(_entries);
+    var filtered = List<JournalEntry>.from(_entries);
+    if (keyword != null && keyword.isNotEmpty) {
+      final kw = keyword.toLowerCase();
+      filtered = filtered.where((e) => e.title.toLowerCase().contains(kw) || e.content.toLowerCase().contains(kw)).toList();
+    }
+    if (categoryId != null && categoryId.isNotEmpty) {
+      filtered = filtered.where((e) => e.categoryId == categoryId).toList();
+    }
+    if (tagId != null && tagId.isNotEmpty) {
+      filtered = filtered.where((e) => e.tagIds.contains(tagId)).toList();
+    }
+    if (startDate != null) {
+      final start = DateTime(startDate.year, startDate.month, startDate.day);
+      filtered = filtered.where((e) => e.entryDate.isAfter(start) || e.entryDate.isAtSameMomentAs(start)).toList();
+    }
+    if (endDate != null) {
+      final end = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59, 999);
+      filtered = filtered.where((e) => e.entryDate.isBefore(end) || e.entryDate.isAtSameMomentAs(end)).toList();
+    }
+
+    // Sort by entryDate descending
+    filtered.sort((a, b) => b.entryDate.compareTo(a.entryDate));
+
+    if (page != null && limit != null) {
+      final startIndex = (page - 1) * limit;
+      if (startIndex >= filtered.length) {
+        return [];
+      }
+      final endIndex = startIndex + limit;
+      return filtered.sublist(startIndex, endIndex > filtered.length ? filtered.length : endIndex);
+    }
+
+    return filtered;
+  }
+
+  @override
+  Future<List<String>> getCalendarDates(int month, int year) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    final dates = _entries.where((e) => e.entryDate.year == year && e.entryDate.month == month)
+        .map((e) {
+          final d = e.entryDate;
+          return "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
+        })
+        .toSet()
+        .toList();
+    dates.sort();
+    return dates;
   }
 
   Future<JournalEntry> createEntry(JournalEntry entry) async {

@@ -39,18 +39,27 @@ export const errorHandler = (err, req, res, next) => {
 
   res.locals.errorMessage = err.message;
 
+  // Build the client-facing error response.
+  // Stack traces are NEVER included in the response body outside of development
+  // to prevent leaking internal file paths and implementation details.
   const response = {
     errorCode,
     message,
     timestamp: new Date().toISOString(),
     requestId: req.headers['x-request-id'] || uuidv4(),
+    // Stack trace is conditionally included ONLY in development — never in production/test
+    ...(config.env === 'development' && { stack: err.stack }),
   };
 
   if (config.env === 'development') {
     logger.error('API Error: %o', err);
-    response.stack = err.stack;
-  } else if (statusCode >= 500) {
-    logger.error('Critical Server Error: %o', err);
+  } else {
+    // In production, log all errors server-side for observability without exposing to client
+    if (statusCode >= 500) {
+      logger.error('Critical Server Error: %o', err);
+    } else {
+      logger.warn('Client Error [%d] %s: %s', statusCode, errorCode, message);
+    }
   }
 
   res.status(statusCode).json(response);

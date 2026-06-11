@@ -44,7 +44,7 @@ export const journalService = {
       categoryId,
       title: title.trim(),
       content: content.trim(),
-      entryDate,
+      entryDate: typeof entryDate === 'string' ? entryDate : (entryDate instanceof Date ? entryDate.toISOString() : String(entryDate)),
       wordCount,
       isPrivate
     };
@@ -91,7 +91,9 @@ export const journalService = {
 
     const updatedTitle = title !== undefined ? title.trim() : entry.title;
     const updatedContent = content !== undefined ? content.trim() : entry.content;
-    const updatedEntryDate = entryDate !== undefined ? entryDate : entry.entryDate;
+    const updatedEntryDate = entryDate !== undefined 
+      ? (typeof entryDate === 'string' ? entryDate : (entryDate instanceof Date ? entryDate.toISOString() : String(entryDate))) 
+      : entry.entryDate;
     const updatedCategoryId = categoryId !== undefined ? categoryId : entry.categoryId;
     const updatedIsPrivate = isPrivate !== undefined ? isPrivate : entry.isPrivate;
     const updatedTags = tags !== undefined ? tags : entry.tags;

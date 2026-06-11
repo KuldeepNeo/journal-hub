@@ -23,191 +23,199 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     _selectedDay = _focusedDay;
   }
 
-  List<JournalEntry> _getEntriesForDay(DateTime day, List<JournalEntry> entries) {
-    return entries.where((entry) {
-      return isSameDay(entry.entryDate, day);
-    }).toList();
+  String _formatDateKey(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final journalsState = ref.watch(journalsProvider);
+    final yearMonthStr = "${_focusedDay.year}-${_focusedDay.month}";
+
+    // Watch calendar dates (highlights) for current focused month/year
+    final highlightedDatesState = ref.watch(calendarDatesProvider(yearMonthStr));
+
+    // Watch entries for the selected day
+    final selectedDay = _selectedDay ?? _focusedDay;
+    final selectedDayEntriesState = ref.watch(calendarEntriesProvider(selectedDay));
+
+    final calendarCard = Card(
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: TableCalendar<Object>(
+          firstDay: DateTime(2025, 1, 1),
+          lastDay: DateTime.now().add(const Duration(days: 365)),
+          focusedDay: _focusedDay,
+          calendarFormat: _calendarFormat,
+          selectedDayPredicate: (day) {
+            return isSameDay(_selectedDay, day);
+          },
+          onDaySelected: (selectedDay, focusedDay) {
+            if (!isSameDay(_selectedDay, selectedDay)) {
+              setState(() {
+                _selectedDay = selectedDay;
+                _focusedDay = focusedDay;
+              });
+            }
+          },
+          onFormatChanged: (format) {
+            if (_calendarFormat != format) {
+              setState(() {
+                _calendarFormat = format;
+              });
+            }
+          },
+          onPageChanged: (focusedDay) {
+            setState(() {
+              _focusedDay = focusedDay;
+            });
+          },
+          eventLoader: (day) {
+            final dateKey = _formatDateKey(day);
+            final highlights = highlightedDatesState.value ?? [];
+            return highlights.contains(dateKey) ? [true] : const [];
+          },
+          calendarStyle: CalendarStyle(
+            todayDecoration: BoxDecoration(
+              color: theme.colorScheme.primary.withOpacity(0.4),
+              shape: BoxShape.circle,
+            ),
+            selectedDecoration: BoxDecoration(
+              color: theme.colorScheme.primary,
+              shape: BoxShape.circle,
+            ),
+            markerDecoration: BoxDecoration(
+              color: theme.colorScheme.secondary,
+              shape: BoxShape.circle,
+            ),
+            markersMaxCount: 1,
+          ),
+          headerStyle: const HeaderStyle(
+            formatButtonVisible: true,
+            titleCentered: true,
+          ),
+        ),
+      ),
+    );
+
+    final timelineSection = Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+              child: Text(
+                _selectedDay == null
+                    ? 'Select a day to view entries'
+                    : 'Entries for ${_formatDateFull(_selectedDay!)}',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            selectedDayEntriesState.when(
+              loading: () => const Expanded(child: Center(child: CircularProgressIndicator())),
+              error: (err, _) => Expanded(child: Center(child: Text('Error loading journal entries: $err'))),
+              data: (selectedDayEntries) {
+                if (selectedDayEntries.isEmpty) {
+                  return Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.event_note_rounded,
+                            size: 48,
+                            color: theme.colorScheme.onSurface.withOpacity(0.2),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No entries for this day',
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface.withOpacity(0.5),
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextButton.icon(
+                            onPressed: () {
+                              context.go('/journals/create');
+                            },
+                            icon: const Icon(Icons.edit_note_rounded),
+                            label: const Text('Write Entry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                return Expanded(
+                  child: ListView.builder(
+                    itemCount: selectedDayEntries.length,
+                    itemBuilder: (context, index) {
+                      final entry = selectedDayEntries[index];
+                      return _buildDailyEntryTile(context, entry, theme, ref);
+                    },
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Calendar View', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
-      body: journalsState.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Error loading journal entries: $err')),
-        data: (entries) {
-          final selectedDayEntries = _getEntriesForDay(_selectedDay ?? _focusedDay, entries);
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 800;
 
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth >= 800;
-
-              final calendarCard = Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TableCalendar<JournalEntry>(
-                    firstDay: DateTime(2025, 1, 1),
-                    lastDay: DateTime.now().add(const Duration(days: 365)),
-                    focusedDay: _focusedDay,
-                    calendarFormat: _calendarFormat,
-                    selectedDayPredicate: (day) {
-                      return isSameDay(_selectedDay, day);
-                    },
-                    onDaySelected: (selectedDay, focusedDay) {
-                      if (!isSameDay(_selectedDay, selectedDay)) {
-                        setState(() {
-                          _selectedDay = selectedDay;
-                          _focusedDay = focusedDay;
-                        });
-                      }
-                    },
-                    onFormatChanged: (format) {
-                      if (_calendarFormat != format) {
-                        setState(() {
-                          _calendarFormat = format;
-                        });
-                      }
-                    },
-                    onPageChanged: (focusedDay) {
-                      _focusedDay = focusedDay;
-                    },
-                    eventLoader: (day) => _getEntriesForDay(day, entries),
-                    calendarStyle: CalendarStyle(
-                      todayDecoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.4),
-                        shape: BoxShape.circle,
+          if (isWide) {
+            // Side-by-side layout on desktop/web
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 5,
+                    child: calendarCard,
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    flex: 4,
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            timelineSection,
+                          ],
+                        ),
                       ),
-                      selectedDecoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      markerDecoration: BoxDecoration(
-                        color: theme.colorScheme.secondary,
-                        shape: BoxShape.circle,
-                      ),
-                      markersMaxCount: 3,
-                    ),
-                    headerStyle: const HeaderStyle(
-                      formatButtonVisible: true,
-                      titleCentered: true,
                     ),
                   ),
-                ),
-              );
-
-              final timelineSection = Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
-                        child: Text(
-                          _selectedDay == null
-                              ? 'Select a day to view entries'
-                              : 'Entries for ${_formatDateFull(_selectedDay!)}',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      if (selectedDayEntries.isEmpty)
-                        Expanded(
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.event_note_rounded,
-                                  size: 48,
-                                  color: theme.colorScheme.onSurface.withOpacity(0.2),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'No entries for this day',
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface.withOpacity(0.5),
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                TextButton.icon(
-                                  onPressed: () {
-                                    // Prefill entry date in editor screen
-                                    context.go('/journals/create');
-                                  },
-                                  icon: const Icon(Icons.edit_note_rounded),
-                                  label: const Text('Write Entry'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else
-                        Expanded(
-                          child: ListView.builder(
-                            itemCount: selectedDayEntries.length,
-                            itemBuilder: (context, index) {
-                              final entry = selectedDayEntries[index];
-                              return _buildDailyEntryTile(context, entry, theme, ref);
-                            },
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-
-              if (isWide) {
-                // Side-by-side layout on desktop/web
-                return Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 5,
-                        child: calendarCard,
-                      ),
-                      const SizedBox(width: 24),
-                      Expanded(
-                        flex: 4,
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              children: [
-                                timelineSection,
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              } else {
-                // Vertical layout on mobile
-                return Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      calendarCard,
-                      const SizedBox(height: 16),
-                      timelineSection,
-                    ],
-                  ),
-                );
-              }
-            },
-          );
+                ],
+              ),
+            );
+          } else {
+            // Vertical layout on mobile
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  calendarCard,
+                  const SizedBox(height: 16),
+                  timelineSection,
+                ],
+              ),
+            );
+          }
         },
       ),
     );

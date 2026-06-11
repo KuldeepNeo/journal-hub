@@ -14,7 +14,7 @@ class DashboardScreen extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final user = authState.value;
 
-    final journalsState = ref.watch(journalsProvider);
+    final journalsState = ref.watch(recentEntriesProvider);
     final analyticsState = ref.watch(analyticsProvider);
 
     return Scaffold(
@@ -24,7 +24,7 @@ class DashboardScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () {
-              ref.invalidate(journalsProvider);
+              ref.invalidate(allEntriesProvider);
               ref.invalidate(analyticsProvider);
             },
           ),
@@ -47,7 +47,7 @@ class DashboardScreen extends ConsumerWidget {
               Text('Error loading dashboard: $err'),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => ref.read(journalsProvider.notifier).loadEntries(),
+                onPressed: () => ref.invalidate(allEntriesProvider),
                 child: const Text('Retry'),
               ),
             ],

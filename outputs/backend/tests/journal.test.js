@@ -163,6 +163,31 @@ describe('Journal Management APIs', () => {
       expect(res.body.length).toBe(1);
       expect(res.body[0].title).toBe('My Day at the Park');
     });
+
+    it('should filter entries by tag', async () => {
+      const res = await request(app)
+        .get('/api/v1/journals')
+        .query({ tag: tagId1 })
+        .set('Authorization', `Bearer ${user1Token}`);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.length).toBeGreaterThanOrEqual(1);
+      expect(res.body.every((e) => e.tags.includes(tagId1))).toBe(true);
+    });
+
+    it('should filter entries by date range', async () => {
+      const res = await request(app)
+        .get('/api/v1/journals')
+        .query({ startDate: '2026-06-10T00:00:00.000Z', endDate: '2026-06-12T00:00:00.000Z' })
+        .set('Authorization', `Bearer ${user1Token}`);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.length).toBeGreaterThanOrEqual(1);
+      expect(res.body.every((e) => {
+        const date = new Date(e.entryDate);
+        return date >= new Date('2026-06-10') && date <= new Date('2026-06-12T23:59:59.999Z');
+      })).toBe(true);
+    });
   });
 
   describe('GET /api/v1/journals/:journalId', () => {

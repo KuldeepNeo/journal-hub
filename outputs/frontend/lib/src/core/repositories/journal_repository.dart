@@ -133,15 +133,49 @@ class JournalRepository {
     );
   }
 
-  Future<List<JournalEntry>> getEntries() async {
+  Future<List<JournalEntry>> getEntries({
+    String? keyword,
+    String? categoryId,
+    String? tagId,
+    DateTime? startDate,
+    DateTime? endDate,
+    int? page,
+    int? limit,
+  }) async {
     try {
-      final response = await _apiClient.dio.get('/journals');
+      final queryParams = {
+        if (keyword != null && keyword.isNotEmpty) 'keyword': keyword,
+        if (categoryId != null && categoryId.isNotEmpty) 'category': categoryId,
+        if (tagId != null && tagId.isNotEmpty) 'tag': tagId,
+        if (startDate != null) 'startDate': startDate.toUtc().toIso8601String(),
+        if (endDate != null) 'endDate': endDate.toUtc().toIso8601String(),
+        if (page != null) 'page': page,
+        if (limit != null) 'limit': limit,
+      };
+      final response = await _apiClient.dio.get('/journals', queryParameters: queryParams);
       final data = response.data as List;
       return data.map((json) => _mapJsonToEntry(json as Map<String, dynamic>)).toList();
     } on DioException catch (e) {
       if (e.response != null && e.response!.data != null) {
         final errCode = e.response!.data['errorCode'];
         throw Exception(errCode ?? 'FETCH_ENTRIES_FAILED');
+      }
+      throw Exception('CONNECTION_ERROR');
+    }
+  }
+
+  Future<List<String>> getCalendarDates(int month, int year) async {
+    try {
+      final response = await _apiClient.dio.get('/calendar', queryParameters: {
+        'month': month,
+        'year': year,
+      });
+      final data = response.data as List;
+      return List<String>.from(data);
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data != null) {
+        final errCode = e.response!.data['errorCode'];
+        throw Exception(errCode ?? 'FETCH_CALENDAR_FAILED');
       }
       throw Exception('CONNECTION_ERROR');
     }

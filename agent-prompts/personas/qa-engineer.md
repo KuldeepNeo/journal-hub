@@ -271,7 +271,7 @@ Preferred Tools:
 
 ## Folder Path
 
-Folder Path : outputs/testing-artifacts/[Module Name]/defect-reports.md
+Folder Path : outputs/testing-artifacts/[Module Name]/[Module Name]-defect-reports.md
 
 
 ## Expected output format
@@ -302,7 +302,7 @@ Note: Ouput should be in Tabular Format
 
 ## Folder Path
 
-Folder Path : outputs/testing-artifacts/[Module Name]-test-cases-report.md
+Folder Path : outputs/testing-artifacts/[Module Name]/[Module Name]-test-cases-report.md
 
 Note: Read [master.md](../md-files/master.md) for test cases generation guidelines
 

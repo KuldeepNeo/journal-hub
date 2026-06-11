@@ -126,9 +126,26 @@ final tagsProvider = Provider<List<Tag>>((ref) {
 });
 
 // 4. Journals State Notifier
+// 4. Journals State Notifier
+final allEntriesProvider = FutureProvider<List<JournalEntry>>((ref) async {
+  final repo = ref.watch(journalRepositoryProvider);
+  await repo.loadMetadata();
+  return repo.getEntries();
+});
+
+final recentEntriesProvider = Provider<AsyncValue<List<JournalEntry>>>((ref) {
+  final allEntriesState = ref.watch(allEntriesProvider);
+  return allEntriesState.when(
+    loading: () => const AsyncValue.loading(),
+    error: (err, stack) => AsyncValue.error(err, stack),
+    data: (entries) => AsyncValue.data(entries.take(3).toList()),
+  );
+});
+
 class JournalsNotifier extends StateNotifier<AsyncValue<List<JournalEntry>>> {
   final JournalRepository _repo;
-  JournalsNotifier(this._repo) : super(const AsyncValue.loading()) {
+  final Ref _ref;
+  JournalsNotifier(this._repo, this._ref) : super(const AsyncValue.loading()) {
     loadEntries();
   }
 
@@ -136,7 +153,18 @@ class JournalsNotifier extends StateNotifier<AsyncValue<List<JournalEntry>>> {
     state = const AsyncValue.loading();
     try {
       await _repo.loadMetadata();
-      final entries = await _repo.getEntries();
+      final query = _ref.read(searchQueryProvider);
+      final catId = _ref.read(selectedCategoryFilterProvider);
+      final tagId = _ref.read(selectedTagFilterProvider);
+      final dateRange = _ref.read(selectedDateRangeFilterProvider);
+
+      final entries = await _repo.getEntries(
+        keyword: query.isNotEmpty ? query : null,
+        categoryId: catId,
+        tagId: tagId,
+        startDate: dateRange?.start,
+        endDate: dateRange?.end,
+      );
       state = AsyncValue.data(entries);
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
@@ -168,6 +196,7 @@ class JournalsNotifier extends StateNotifier<AsyncValue<List<JournalEntry>>> {
 
     try {
       await _repo.createEntry(entry);
+      _ref.invalidate(allEntriesProvider);
       await loadEntries();
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
@@ -177,6 +206,7 @@ class JournalsNotifier extends StateNotifier<AsyncValue<List<JournalEntry>>> {
   Future<void> updateEntry(JournalEntry entry) async {
     try {
       await _repo.updateEntry(entry);
+      _ref.invalidate(allEntriesProvider);
       await loadEntries();
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
@@ -186,6 +216,7 @@ class JournalsNotifier extends StateNotifier<AsyncValue<List<JournalEntry>>> {
   Future<void> deleteEntry(String journalId) async {
     try {
       await _repo.deleteEntry(journalId);
+      _ref.invalidate(allEntriesProvider);
       await loadEntries();
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
@@ -195,7 +226,11 @@ class JournalsNotifier extends StateNotifier<AsyncValue<List<JournalEntry>>> {
 
 final journalsProvider = StateNotifierProvider<JournalsNotifier, AsyncValue<List<JournalEntry>>>((ref) {
   final repo = ref.watch(journalRepositoryProvider);
-  return JournalsNotifier(repo);
+  ref.watch(searchQueryProvider);
+  ref.watch(selectedCategoryFilterProvider);
+  ref.watch(selectedTagFilterProvider);
+  ref.watch(selectedDateRangeFilterProvider);
+  return JournalsNotifier(repo, ref);
 });
 
 // 5. Search and Filters State
@@ -206,52 +241,37 @@ final selectedDateRangeFilterProvider = StateProvider<DateTimeRange?>((ref) => n
 
 // 6. Filtered Entries Provider
 final filteredEntriesProvider = Provider<AsyncValue<List<JournalEntry>>>((ref) {
-  final journalsState = ref.watch(journalsProvider);
-  final query = ref.watch(searchQueryProvider).toLowerCase();
-  final catId = ref.watch(selectedCategoryFilterProvider);
-  final tagId = ref.watch(selectedTagFilterProvider);
-  final dateRange = ref.watch(selectedDateRangeFilterProvider);
-
-  return journalsState.when(
-    loading: () => const AsyncValue.loading(),
-    error: (e, s) => AsyncValue.error(e, s),
-    data: (entries) {
-      final filtered = entries.where((entry) {
-        // Filter by query
-        if (query.isNotEmpty) {
-          final matchesTitle = entry.title.toLowerCase().contains(query);
-          final matchesContent = entry.content.toLowerCase().contains(query);
-          if (!matchesTitle && !matchesContent) return false;
-        }
-        // Filter by category
-        if (catId != null && entry.categoryId != catId) return false;
-        // Filter by tag
-        if (tagId != null && !entry.tagIds.contains(tagId)) return false;
-        // Filter by date range
-        if (dateRange != null) {
-          final start = DateTime(dateRange.start.year, dateRange.start.month, dateRange.start.day);
-          final end = DateTime(dateRange.end.year, dateRange.end.month, dateRange.end.day, 23, 59, 59);
-          if (entry.entryDate.isBefore(start) || entry.entryDate.isAfter(end)) return false;
-        }
-        return true;
-      }).toList();
-
-      // Sort by entry date descending
-      filtered.sort((a, b) => b.entryDate.compareTo(a.entryDate));
-      return AsyncValue.data(filtered);
-    },
-  );
+  return ref.watch(journalsProvider);
 });
 
 // 7. Analytics Provider
 final analyticsProvider = FutureProvider<AnalyticsData>((ref) async {
-  final journalsState = ref.watch(journalsProvider);
+  final allEntriesState = ref.watch(allEntriesProvider);
   final repo = ref.watch(analyticsRepositoryProvider);
   
-  return journalsState.when(
+  return allEntriesState.when(
     loading: () => Completer<AnalyticsData>().future,
     error: (err, stack) => Future.error(err, stack),
     data: (entries) => repo.getAnalytics(entries),
+  );
+});
+
+// 7.5. Calendar Highlights & Entries Providers
+final calendarDatesProvider = FutureProvider.family<List<String>, String>((ref, yearMonth) async {
+  final repo = ref.watch(journalRepositoryProvider);
+  final parts = yearMonth.split('-');
+  final year = int.parse(parts[0]);
+  final month = int.parse(parts[1]);
+  return repo.getCalendarDates(month, year);
+});
+
+final calendarEntriesProvider = FutureProvider.family<List<JournalEntry>, DateTime>((ref, date) async {
+  final repo = ref.watch(journalRepositoryProvider);
+  final startOfDay = DateTime(date.year, date.month, date.day);
+  final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
+  return repo.getEntries(
+    startDate: startOfDay,
+    endDate: endOfDay,
   );
 });
 

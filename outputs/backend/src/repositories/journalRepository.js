@@ -205,6 +205,24 @@ export const journalRepository = {
       modifiedAt: r.modified_at,
       modifiedBy: r.modified_by
     }));
+  },
+
+  async findDatesByMonthAndYear(userId, month, year) {
+    const monthStr = String(month).padStart(2, '0');
+    const yearStr = String(year);
+    const sql = `
+      SELECT DISTINCT entry_date
+      FROM JournalEntry
+      WHERE user_id = ? AND deleted_at IS NULL
+        AND strftime('%Y', entry_date) = ?
+        AND strftime('%m', entry_date) = ?
+      ORDER BY entry_date ASC;
+    `;
+    const rows = await db.all(sql, [userId, yearStr, monthStr]);
+    return rows.map((row) => {
+      const d = row.entry_date;
+      return d.includes('T') ? d.split('T')[0] : d;
+    });
   }
 };
 

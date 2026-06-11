@@ -3,6 +3,7 @@ import journalController from '../controllers/journalController.js';
 import journalValidation from '../validation/journalValidation.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 
+
 const router = express.Router();
 
 // Apply auth middleware to all journal routes
@@ -14,7 +15,12 @@ router.post(
   journalController.createJournal
 );
 
-router.get('/', journalController.listJournals);
+router.get(
+  '/',
+  journalValidation.validateQuery(journalValidation.listJournalsQuerySchema),
+  journalController.listJournals
+);
+
 
 router.get('/:journalId', journalController.getJournal);
 

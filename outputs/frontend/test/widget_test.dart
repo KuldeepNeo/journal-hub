@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:table_calendar/table_calendar.dart';
 import 'package:journal_app/src/app.dart';
 import 'package:journal_app/src/config/router.dart';
 import 'package:journal_app/src/core/models/models.dart';
@@ -250,5 +251,71 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
     expect(find.text('#grateful'), findsNothing);
+  });
+
+  testWidgets('Journal entries search and filtering test', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(TestAuthRepository()),
+          journalRepositoryProvider.overrideWithValue(MockJournalRepository()),
+        ],
+        child: const JournalApp(),
+      ),
+    );
+
+    // Reset GoRouter location to /journals
+    goRouter.go('/journals');
+    await tester.pumpAndSettle();
+
+    // Verify initially loaded entries from MockJournalRepository
+    expect(find.text('A beautiful weekend getaway'), findsOneWidget);
+    expect(find.text('Stitch UI Screens Integration'), findsOneWidget);
+
+    // Search for "weekend" keyword
+    await tester.enterText(find.byType(TextField).first, 'weekend');
+    await tester.pumpAndSettle();
+    
+    // Settle for mock delay
+    await tester.pump(const Duration(milliseconds: 450));
+    await tester.pumpAndSettle();
+
+    // Verify filtered entries
+    expect(find.text('A beautiful weekend getaway'), findsOneWidget);
+    expect(find.text('Stitch UI Screens Integration'), findsNothing);
+
+    // Clear Search
+    await tester.tap(find.byIcon(Icons.clear_rounded));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 450));
+    await tester.pumpAndSettle();
+
+    // Verify it is restored
+    expect(find.text('A beautiful weekend getaway'), findsOneWidget);
+    expect(find.text('Stitch UI Screens Integration'), findsOneWidget);
+  });
+
+  testWidgets('Calendar screen rendering and highlights test', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(TestAuthRepository()),
+          journalRepositoryProvider.overrideWithValue(MockJournalRepository()),
+        ],
+        child: const JournalApp(),
+      ),
+    );
+
+    // Reset GoRouter location to /calendar
+    goRouter.go('/calendar');
+    await tester.pumpAndSettle();
+
+    // Verify Calendar screen is displayed
+    expect(find.widgetWithText(AppBar, 'Calendar View'), findsOneWidget);
+    expect(find.byWidgetPredicate((widget) => widget is TableCalendar), findsOneWidget);
+    
+    // Settle calendar highlighting and entries fetching
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
   });
 }
