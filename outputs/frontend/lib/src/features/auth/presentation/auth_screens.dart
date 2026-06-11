@@ -537,7 +537,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Simulated password reset code sent! (Use code: 123456)'),
+            content: Text('Password reset code sent! Please check your email or console logs.'),
             backgroundColor: Colors.teal,
           ),
         );
@@ -553,14 +553,17 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   void _handleResetPassword() async {
-    if (_tokenController.text != '123456') {
+    final token = _tokenController.text.trim();
+    final newPassword = _newPasswordController.text;
+
+    if (token.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid code. Try using: 123456'), backgroundColor: Colors.redAccent),
+        const SnackBar(content: Text('Verification code is required'), backgroundColor: Colors.redAccent),
       );
       return;
     }
 
-    if (_newPasswordController.text.length < 8) {
+    if (newPassword.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Password must be at least 8 characters'), backgroundColor: Colors.redAccent),
       );
@@ -568,14 +571,17 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     }
 
     try {
-      await ref.read(authRepositoryProvider).resetPassword(_tokenController.text, _newPasswordController.text);
+      await ref.read(authRepositoryProvider).resetPassword(token, newPassword);
       setState(() {
         _resetComplete = true;
       });
       _showSuccessDialog();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.redAccent),
+        SnackBar(
+          content: Text('Reset failed: ${e.toString().replaceAll('Exception: ', '')}'),
+          backgroundColor: Colors.redAccent,
+        ),
       );
     }
   }

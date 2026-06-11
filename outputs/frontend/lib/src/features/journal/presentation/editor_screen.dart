@@ -29,10 +29,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   bool _isPrivate = true;
   int _wordCount = 0;
   
-  // Auto-save simulation
+  // Auto-save and draft properties
   Timer? _debounceTimer;
   String _saveStatus = 'Draft saved'; // 'Saving...', 'Draft saved', 'Modified'
   JournalEntry? _existingEntry;
+  String? _draftId;
 
   @override
   void initState() {
@@ -40,32 +41,90 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     _contentController.addListener(_onContentChanged);
     _titleController.addListener(_onTitleChanged);
     
-    // Load entry if editing
-    Future.microtask(() {
-      if (widget.entryId != null) {
-        final entriesState = ref.read(journalsProvider);
-        entriesState.whenData((entries) {
-          final entry = entries.firstWhere((e) => e.journalId == widget.entryId);
-          setState(() {
-            _existingEntry = entry;
-            _titleController.text = entry.title;
-            _contentController.text = entry.content;
-            _selectedCategoryId = entry.categoryId;
-            _selectedTagIds.clear();
-            _selectedTagIds.addAll(entry.tagIds);
-            _isPrivate = entry.isPrivate;
-            _wordCount = entry.wordCount;
-            _saveStatus = 'Draft loaded';
-          });
-        });
-      } else if (widget.initialPrompt != null) {
-        setState(() {
-          _titleController.text = 'Reflection on: ${widget.initialPrompt}';
-          _contentController.text = 'Today\'s prompt: "${widget.initialPrompt}"\n\n';
-          _saveStatus = 'New draft';
-        });
+    // Load entry or recovery draft
+    Future.microtask(() async {
+      if (!mounted) return;
+
+      final draftRepo = ref.read(draftRepositoryProvider);
+      final localDraft = await draftRepo.getLocalDraft(widget.entryId);
+      if (localDraft != null && mounted) {
+        final draftTitle = localDraft['title'] as String? ?? '';
+        final draftContent = localDraft['content'] as String? ?? '';
+        if (draftTitle.isNotEmpty || draftContent.isNotEmpty) {
+          _showRestoreDraftDialog(localDraft);
+          return;
+        }
       }
+
+      _initializeDefaultState();
     });
+  }
+
+  void _initializeDefaultState() {
+    if (widget.entryId != null) {
+      final entriesState = ref.read(journalsProvider);
+      entriesState.whenData((entries) {
+        final entry = entries.firstWhere((e) => e.journalId == widget.entryId);
+        setState(() {
+          _existingEntry = entry;
+          _titleController.text = entry.title;
+          _contentController.text = entry.content;
+          _selectedCategoryId = entry.categoryId;
+          _selectedTagIds.clear();
+          _selectedTagIds.addAll(entry.tagIds);
+          _isPrivate = entry.isPrivate;
+          _wordCount = entry.wordCount;
+          _saveStatus = 'Draft loaded';
+        });
+      });
+    } else if (widget.initialPrompt != null) {
+      setState(() {
+        _titleController.text = 'Reflection on: ${widget.initialPrompt}';
+        _contentController.text = 'Today\'s prompt: "${widget.initialPrompt}"\n\n';
+        _saveStatus = 'New draft';
+      });
+    }
+  }
+
+  void _showRestoreDraftDialog(Map<String, dynamic> localDraft) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.restore_rounded, color: Colors.orangeAccent),
+            SizedBox(width: 12),
+            Text('Recover Unsaved Draft?'),
+          ],
+        ),
+        content: const Text(
+          'It looks like you have an unsaved draft from a previous session. '
+          'Would you like to restore it?'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ref.read(draftRepositoryProvider).clearLocalDraft(widget.entryId);
+              _initializeDefaultState();
+            },
+            child: const Text('Discard Draft'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _titleController.text = localDraft['title'] ?? '';
+                _contentController.text = localDraft['content'] ?? '';
+                _saveStatus = 'Draft recovered';
+              });
+              Navigator.pop(ctx);
+            },
+            child: const Text('Restore'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -99,7 +158,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   }
 
   void _markModified() {
-    if (_saveStatus == 'Draft saved' || _saveStatus == 'Draft loaded') {
+    if (_saveStatus == 'Draft saved' || _saveStatus == 'Draft loaded' || _saveStatus == 'Draft recovered') {
       setState(() {
         _saveStatus = 'Unsaved changes';
       });
@@ -109,23 +168,47 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   void _triggerAutoSave() {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(seconds: 2), () {
-      _simulateAutoSave();
+      _performAutoSave();
     });
   }
 
-  void _simulateAutoSave() {
+  void _performAutoSave() async {
     if (!mounted) return;
     setState(() {
       _saveStatus = 'Saving...';
     });
-    
-    // Simulate auto-save delay
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (!mounted) return;
-      setState(() {
-        _saveStatus = 'Draft saved';
-      });
-    });
+
+    final title = _titleController.text;
+    final content = _contentController.text;
+    final journalId = widget.entryId;
+
+    final draftRepo = ref.read(draftRepositoryProvider);
+    await draftRepo.saveDraftLocal(
+      journalId: journalId,
+      title: title,
+      content: content,
+    );
+
+    try {
+      final result = await draftRepo.saveDraftRemote(
+        draftId: _draftId,
+        journalId: journalId,
+        title: title,
+        content: content,
+      );
+      if (mounted) {
+        setState(() {
+          _draftId = result['draftId'];
+          _saveStatus = 'Draft saved';
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _saveStatus = 'Local draft saved';
+        });
+      }
+    }
   }
 
   void _insertFormatting(String prefix, String suffix) {
@@ -183,6 +266,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       
       if (mounted) {
         Navigator.pop(context); // Pop loading dialog
+        try {
+          await ref.read(draftRepositoryProvider).clearLocalDraft(widget.entryId);
+        } catch (_) {}
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_existingEntry != null ? 'Entry updated successfully' : 'Entry created successfully'),

@@ -1,46 +1,83 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../network/api_client.dart';
 import '../models/models.dart';
 
 class AuthRepository {
   final ApiClient _apiClient;
 
-  // Keep a mock store for simulated endpoints not yet integrated (Module 2+)
-  final Map<String, String> _users = {
-    'verified@example.com': 'Password123!',
-    'pending@example.com': 'Password123!',
-    'disabled@example.com': 'Password123!',
-  };
-  final Map<String, String> _statuses = {
-    'verified@example.com': 'Verified',
-    'pending@example.com': 'Pending',
-    'disabled@example.com': 'Disabled',
-  };
-  final Map<String, String> _names = {
-    'verified@example.com': 'Jane Doe',
-    'pending@example.com': 'John Doe',
-    'disabled@example.com': 'Block User',
-  };
-
   AuthRepository(this._apiClient);
 
+  User _decodeUserFromToken(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length == 3) {
+        final payload = parts[1];
+        var normalized = base64Url.normalize(payload);
+        final decoded = utf8.decode(base64Url.decode(normalized));
+        final map = json.decode(decoded) as Map<String, dynamic>;
+
+        final exp = map['exp'] as int?;
+        if (exp != null) {
+          final expiryTime = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
+          if (expiryTime.isBefore(DateTime.now())) {
+            throw Exception('TOKEN_EXPIRED');
+          }
+        }
+
+        return User(
+          userId: map['userId'] ?? '',
+          fullName: map['fullName'] ?? '',
+          email: map['email'] ?? '',
+          accountStatus: 'Verified',
+        );
+      }
+    } catch (e) {
+      rethrow;
+    }
+    throw Exception('INVALID_TOKEN');
+  }
+
+  Future<User?> getCurrentUser() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token');
+      if (token != null && token.isNotEmpty) {
+        try {
+          return _decodeUserFromToken(token);
+        } catch (_) {
+          await prefs.remove('access_token');
+          await prefs.remove('refresh_token');
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<User> login(String email, String password) async {
-    await Future.delayed(const Duration(milliseconds: 600)); // Simulate networking
-    if (!_users.containsKey(email) || _users[email] != password) {
-      throw Exception('INVALID_CREDENTIALS');
+    try {
+      final response = await _apiClient.dio.post('/auth/login', data: {
+        'email': email,
+        'password': password,
+      });
+
+      final data = response.data;
+      final accessToken = data['accessToken'] as String;
+      final refreshToken = data['refreshToken'] as String;
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('access_token', accessToken);
+      await prefs.setString('refresh_token', refreshToken);
+
+      return _decodeUserFromToken(accessToken);
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data != null) {
+        final errCode = e.response!.data['errorCode'];
+        throw Exception(errCode ?? 'LOGIN_FAILED');
+      }
+      throw Exception('CONNECTION_ERROR');
     }
-    final status = _statuses[email]!;
-    if (status == 'Pending') {
-      throw Exception('ACCOUNT_NOT_VERIFIED');
-    } else if (status == 'Disabled') {
-      throw Exception('ACCOUNT_DISABLED');
-    }
-    return User(
-      userId: email == 'verified@example.com' ? 'user-1' : 'user-3',
-      fullName: _names[email]!,
-      email: email,
-      accountStatus: status,
-    );
   }
 
   Future<User> register(String fullName, String email, String password) async {
@@ -82,16 +119,43 @@ class AuthRepository {
   }
 
   Future<void> forgotPassword(String email) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (!_users.containsKey(email)) {
-      throw Exception('INVALID_EMAIL');
+    try {
+      await _apiClient.dio.post('/auth/forgot-password', data: {
+        'email': email,
+      });
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data != null) {
+        final errCode = e.response!.data['errorCode'];
+        throw Exception(errCode ?? 'FORGOT_PASSWORD_FAILED');
+      }
+      throw Exception('CONNECTION_ERROR');
     }
   }
 
   Future<void> resetPassword(String token, String newPassword) async {
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (token != '123456') {
-      throw Exception('INVALID_TOKEN');
+    try {
+      await _apiClient.dio.post('/auth/reset-password', data: {
+        'resetToken': token,
+        'newPassword': newPassword,
+      });
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data != null) {
+        final errCode = e.response!.data['errorCode'];
+        throw Exception(errCode ?? 'RESET_PASSWORD_FAILED');
+      }
+      throw Exception('CONNECTION_ERROR');
+    }
+  }
+
+  Future<void> logout() async {
+    try {
+      await _apiClient.dio.post('/auth/logout');
+    } catch (_) {
+      // Swallowed to allow local logout to complete
+    } finally {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('access_token');
+      await prefs.remove('refresh_token');
     }
   }
 }

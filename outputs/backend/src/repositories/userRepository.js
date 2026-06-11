@@ -27,6 +27,26 @@ export const userRepository = {
     `;
     await db.run(sql, [status, userId]);
     return this.findById(userId);
+  },
+
+  async updatePassword(userId, passwordHash) {
+    const sql = `
+      UPDATE User 
+      SET password_hash = ?, updated_at = CURRENT_TIMESTAMP 
+      WHERE user_id = ?;
+    `;
+    await db.run(sql, [passwordHash, userId]);
+    return this.findById(userId);
+  },
+
+  async updateLastLogin(userId) {
+    const sql = `
+      UPDATE User 
+      SET last_login_at = CURRENT_TIMESTAMP 
+      WHERE user_id = ?;
+    `;
+    await db.run(sql, [userId]);
+    return this.findById(userId);
   }
 };
 

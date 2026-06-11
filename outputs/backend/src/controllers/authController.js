@@ -92,6 +92,47 @@ export const authController = {
     } catch (error) {
       next(error);
     }
+  },
+
+  async login(req, res, next) {
+    try {
+      const { email, password } = req.body;
+      const result = await authService.loginUser({ email, password });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async forgotPassword(req, res, next) {
+    try {
+      const { email } = req.body;
+      const result = await authService.forgotPassword(email);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async resetPassword(req, res, next) {
+    try {
+      const { resetToken, newPassword } = req.body;
+      const result = await authService.resetPassword(resetToken, newPassword);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async logout(req, res, next) {
+    try {
+      const authHeader = req.headers.authorization;
+      const token = authHeader.split(' ')[1];
+      const result = await authService.logoutUser(token);
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
   }
 };
 

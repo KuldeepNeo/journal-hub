@@ -48,6 +48,31 @@ class EmailService {
       }
     }
   }
+
+  async sendPasswordResetEmail(email, token) {
+    const mailOptions = {
+      from: '"Journal Hub" <no-reply@journalhub.com>',
+      to: email,
+      subject: 'Reset your Journal Hub Password',
+      text: `You requested a password reset. Please use the following token to reset your password: ${token}`,
+      html: `
+        <h3>Password Reset Request</h3>
+        <p>Please use the following 6-digit token to reset your password:</p>
+        <h2><strong>${token}</strong></h2>
+      `
+    };
+
+    logger.info(`[Password Reset Log] Destination: ${email} | Reset Token: ${token}`);
+
+    if (this.transporter) {
+      try {
+        await this.transporter.sendMail(mailOptions);
+        logger.info(`Password reset email sent successfully to ${email}`);
+      } catch (error) {
+        logger.error(`Failed to send password reset email to ${email} via SMTP: %o`, error);
+      }
+    }
+  }
 }
 
 export const emailService = new EmailService();

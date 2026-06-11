@@ -12,6 +12,25 @@ class TestAuthRepository extends AuthRepository {
   TestAuthRepository() : super(ApiClient());
 
   @override
+  Future<User?> getCurrentUser() async {
+    return null;
+  }
+
+  @override
+  Future<User> login(String email, String password) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (email == 'verified@example.com' && password == 'Password123!') {
+      return User(
+        userId: 'user-1',
+        fullName: 'Jane Doe',
+        email: email,
+        accountStatus: 'Verified',
+      );
+    }
+    throw Exception('INVALID_CREDENTIALS');
+  }
+
+  @override
   Future<User> register(String fullName, String email, String password) async {
     await Future.delayed(const Duration(milliseconds: 100));
     return User(
@@ -25,6 +44,27 @@ class TestAuthRepository extends AuthRepository {
   @override
   Future<void> verifyEmail(String token) async {
     await Future.delayed(const Duration(milliseconds: 100));
+  }
+
+  @override
+  Future<void> forgotPassword(String email) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (email != 'verified@example.com') {
+      throw Exception('INVALID_EMAIL');
+    }
+  }
+
+  @override
+  Future<void> resetPassword(String token, String newPassword) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (token != '123456') {
+      throw Exception('INVALID_TOKEN');
+    }
+  }
+
+  @override
+  Future<void> logout() async {
+    await Future.delayed(const Duration(milliseconds: 50));
   }
 }
 

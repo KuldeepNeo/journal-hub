@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
   final Dio dio;
+  static void Function()? onUnauthorizedGlobal;
 
   ApiClient({String? overrideBaseUrl})
       : dio = Dio(
@@ -31,8 +32,17 @@ class ApiClient {
           }
           return handler.next(options);
         },
-        onError: (DioException error, handler) {
-          // Custom mapped network errors can be structured here
+        onError: (DioException error, handler) async {
+          if (error.response?.statusCode == 401) {
+            try {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.remove('access_token');
+              await prefs.remove('refresh_token');
+            } catch (_) {}
+            if (onUnauthorizedGlobal != null) {
+              onUnauthorizedGlobal!();
+            }
+          }
           return handler.next(error);
         },
       ),

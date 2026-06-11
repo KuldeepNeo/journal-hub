@@ -258,6 +258,27 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                     ),
             ),
+            const SizedBox(height: 32),
+            Text(
+              'Account',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+                title: const Text(
+                  'Logout',
+                  style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                ),
+                onTap: () async {
+                  await ref.read(authProvider.notifier).logout();
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
+                },
+              ),
+            ),
             const SizedBox(height: 40),
           ],
         ),

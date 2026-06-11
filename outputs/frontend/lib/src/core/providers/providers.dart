@@ -6,6 +6,8 @@ import '../models/models.dart';
 import '../repositories/mock_repositories.dart';
 import '../network/api_client.dart';
 import '../repositories/auth_repository.dart';
+import '../repositories/draft_repository.dart';
+import '../../config/router.dart';
 
 // 1. Repository Providers
 final apiClientProvider = Provider<ApiClient>((ref) {
@@ -15,6 +17,11 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);
   return AuthRepository(apiClient);
+});
+
+final draftRepositoryProvider = Provider<DraftRepository>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return DraftRepository(apiClient);
 });
 
 final journalRepositoryProvider = Provider<MockJournalRepository>((ref) {
@@ -32,7 +39,26 @@ final exportRepositoryProvider = Provider<MockExportRepository>((ref) {
 // 2. Auth State Provider
 class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
   final AuthRepository _repo;
-  AuthNotifier(this._repo) : super(const AsyncValue.data(null));
+  AuthNotifier(this._repo) : super(const AsyncValue.loading()) {
+    _init();
+    ApiClient.onUnauthorizedGlobal = () {
+      clearSessionOnExpiry();
+      goRouter.go('/login');
+    };
+  }
+
+  void clearSessionOnExpiry() {
+    state = const AsyncValue.data(null);
+  }
+
+  Future<void> _init() async {
+    try {
+      final user = await _repo.getCurrentUser();
+      state = AsyncValue.data(user);
+    } catch (e, stack) {
+      state = AsyncValue.data(null);
+    }
+  }
 
   Future<void> login(String email, String password) async {
     state = const AsyncValue.loading();
@@ -66,8 +92,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
     }
   }
 
-  void logout() {
-    state = const AsyncValue.data(null);
+  Future<void> logout() async {
+    state = const AsyncValue.loading();
+    try {
+      await _repo.logout();
+      state = const AsyncValue.data(null);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
+    }
   }
 
   void clearError() {

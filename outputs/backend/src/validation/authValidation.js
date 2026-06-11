@@ -25,6 +25,38 @@ export const verifyEmailSchema = Joi.object({
   })
 });
 
+export const loginSchema = Joi.object({
+  email: Joi.string().trim().lowercase().email().required().messages({
+    'any.required': 'REQUIRED_FIELD_MISSING',
+    'string.empty': 'REQUIRED_FIELD_MISSING',
+    'string.email': 'INVALID_EMAIL'
+  }),
+  password: Joi.string().required().messages({
+    'any.required': 'REQUIRED_FIELD_MISSING',
+    'string.empty': 'REQUIRED_FIELD_MISSING'
+  })
+});
+
+export const forgotPasswordSchema = Joi.object({
+  email: Joi.string().trim().lowercase().email().required().messages({
+    'any.required': 'REQUIRED_FIELD_MISSING',
+    'string.empty': 'REQUIRED_FIELD_MISSING',
+    'string.email': 'INVALID_EMAIL'
+  })
+});
+
+export const resetPasswordSchema = Joi.object({
+  resetToken: Joi.string().trim().required().messages({
+    'any.required': 'REQUIRED_FIELD_MISSING',
+    'string.empty': 'REQUIRED_FIELD_MISSING'
+  }),
+  newPassword: Joi.string().min(8).required().messages({
+    'any.required': 'REQUIRED_FIELD_MISSING',
+    'string.empty': 'REQUIRED_FIELD_MISSING',
+    'string.min': 'WEAK_PASSWORD'
+  })
+});
+
 export const validate = (schema) => (req, res, next) => {
   const { error, value } = schema.validate(req.body, { abortEarly: true });
   if (error) {
@@ -52,5 +84,8 @@ export const validate = (schema) => (req, res, next) => {
 export default {
   registerSchema,
   verifyEmailSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
   validate
 };

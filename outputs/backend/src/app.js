@@ -6,6 +6,7 @@ import logger from './config/logger.js';
 import { globalLimiter } from './middleware/rateLimiter.js';
 import { ApiError, errorConverter, errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
+import draftRoutes from './routes/draftRoutes.js';
 
 const app = express();
 
@@ -45,6 +46,9 @@ app.get('/api/v1/health', (req, res) => {
 
 // Authentication APIs
 app.use('/api/v1/auth', authRoutes);
+
+// Draft APIs
+app.use('/api/v1/drafts', draftRoutes);
 
 // Fallback for undefined routes -> throw 404 ApiError
 app.use((req, res, next) => {
