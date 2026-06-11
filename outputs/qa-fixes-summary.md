@@ -5,11 +5,11 @@
 ## Module 2: Authentication & Session Management
 
 ### Overview
-We have resolved all 6 findings reported in the QA defect report for Module 2. The fixes have been verified by updating and running the automated test suites on both the backend and frontend.
+We have resolved all 7 findings reported in the QA defect report for Module 2. The fixes have been verified by updating and running the automated test suites on both the backend and frontend.
 
 ### Summary Metrics
-- **Total Issues Received**: 6
-- **Issues Fixed**: 6
+- **Total Issues Received**: 7
+- **Issues Fixed**: 7
 - **Remaining Issues**: 0
 - **Ready for QA Retest**: Yes
 
@@ -41,6 +41,11 @@ We have resolved all 6 findings reported in the QA defect report for Module 2. T
 - **Root Cause**: The logout button was only present in the desktop sidebar layout. The mobile layout bottom navigation bar and settings page lacked a logout option.
 - **Fix**: Added an "Account" section containing a "Logout" list tile in the `SettingsScreen` (which is accessible on mobile from the dashboard app bar).
 - **Verification**: Verified mobile layout navigation and logout button rendering in the settings screen.
+
+#### DEF-010: Connection Error while logged in into Mobile App
+- **Root Cause**: The API Client (`api_client.dart`) had its backend base URL hardcoded to `http://localhost:5001/api/v1`. On Android mobile emulators, `localhost` points to the emulator's own loopback interface rather than the host computer running the backend server, causing network connection errors when the app attempted remote calls (such as background auto-save draft synchronizations).
+- **Fix**: Updated the `baseUrl` inside [api_client.dart](file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/outputs/frontend/lib/src/core/network/api_client.dart) to check the target platform using `defaultTargetPlatform`. When running on Android (excluding web target), it dynamically falls back to the host machine's loopback interface `http://10.0.2.2:5001/api/v1`.
+- **Verification**: All unit, integration, and widget tests pass cleanly on both frontend and backend.
 
 ---
 

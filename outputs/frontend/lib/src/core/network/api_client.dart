@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
@@ -9,9 +10,12 @@ class ApiClient {
       : dio = Dio(
           BaseOptions(
             // Default to localhost:5001 matching backend, fallbacks for Android emulator loopback
-            baseUrl: overrideBaseUrl ?? 'http://localhost:5001/api/v1',
-            connectTimeout: const Duration(seconds: 15),
-            receiveTimeout: const Duration(seconds: 15),
+            baseUrl: overrideBaseUrl ??
+                (!kIsWeb && defaultTargetPlatform == TargetPlatform.android
+                    ? 'http://10.0.2.2:5001/api/v1'
+                    : 'http://localhost:5001/api/v1'),
+            connectTimeout: const Duration(seconds: 60),
+            receiveTimeout: const Duration(seconds: 60),
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',

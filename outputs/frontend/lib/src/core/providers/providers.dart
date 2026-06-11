@@ -7,6 +7,7 @@ import '../repositories/mock_repositories.dart';
 import '../network/api_client.dart';
 import '../repositories/auth_repository.dart';
 import '../repositories/draft_repository.dart';
+import '../repositories/journal_repository.dart';
 import '../../config/router.dart';
 
 // 1. Repository Providers
@@ -24,8 +25,9 @@ final draftRepositoryProvider = Provider<DraftRepository>((ref) {
   return DraftRepository(apiClient);
 });
 
-final journalRepositoryProvider = Provider<MockJournalRepository>((ref) {
-  return MockJournalRepository();
+final journalRepositoryProvider = Provider<JournalRepository>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return JournalRepository(apiClient);
 });
 
 final analyticsRepositoryProvider = Provider<MockAnalyticsRepository>((ref) {
@@ -125,7 +127,7 @@ final tagsProvider = Provider<List<Tag>>((ref) {
 
 // 4. Journals State Notifier
 class JournalsNotifier extends StateNotifier<AsyncValue<List<JournalEntry>>> {
-  final MockJournalRepository _repo;
+  final JournalRepository _repo;
   JournalsNotifier(this._repo) : super(const AsyncValue.loading()) {
     loadEntries();
   }
@@ -133,6 +135,7 @@ class JournalsNotifier extends StateNotifier<AsyncValue<List<JournalEntry>>> {
   Future<void> loadEntries() async {
     state = const AsyncValue.loading();
     try {
+      await _repo.loadMetadata();
       final entries = await _repo.getEntries();
       state = AsyncValue.data(entries);
     } catch (e, stack) {

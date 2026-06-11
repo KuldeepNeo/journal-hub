@@ -6,6 +6,7 @@ import 'package:journal_app/src/config/router.dart';
 import 'package:journal_app/src/core/models/models.dart';
 import 'package:journal_app/src/core/network/api_client.dart';
 import 'package:journal_app/src/core/repositories/auth_repository.dart';
+import 'package:journal_app/src/core/repositories/mock_repositories.dart';
 import 'package:journal_app/src/core/providers/providers.dart';
 
 class TestAuthRepository extends AuthRepository {
@@ -75,6 +76,7 @@ void main() {
       ProviderScope(
         overrides: [
           authRepositoryProvider.overrideWithValue(TestAuthRepository()),
+          journalRepositoryProvider.overrideWithValue(MockJournalRepository()),
         ],
         child: const JournalApp(),
       ),
@@ -115,6 +117,7 @@ void main() {
       ProviderScope(
         overrides: [
           authRepositoryProvider.overrideWithValue(TestAuthRepository()),
+          journalRepositoryProvider.overrideWithValue(MockJournalRepository()),
         ],
         child: const JournalApp(),
       ),
@@ -176,6 +179,7 @@ void main() {
       ProviderScope(
         overrides: [
           authRepositoryProvider.overrideWithValue(TestAuthRepository()),
+          journalRepositoryProvider.overrideWithValue(MockJournalRepository()),
         ],
         child: const JournalApp(),
       ),

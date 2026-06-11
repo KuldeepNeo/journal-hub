@@ -7,6 +7,9 @@ import { globalLimiter } from './middleware/rateLimiter.js';
 import { ApiError, errorConverter, errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
 import draftRoutes from './routes/draftRoutes.js';
+import journalRoutes from './routes/journalRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
+import tagRoutes from './routes/tagRoutes.js';
 
 const app = express();
 
@@ -49,6 +52,15 @@ app.use('/api/v1/auth', authRoutes);
 
 // Draft APIs
 app.use('/api/v1/drafts', draftRoutes);
+
+// Journal Entries APIs
+app.use('/api/v1/journals', journalRoutes);
+
+// Categories APIs
+app.use('/api/v1/categories', categoryRoutes);
+
+// Tags APIs
+app.use('/api/v1/tags', tagRoutes);
 
 // Fallback for undefined routes -> throw 404 ApiError
 app.use((req, res, next) => {

@@ -1,5 +1,7 @@
 import 'dart:async';
 import '../models/models.dart';
+import 'journal_repository.dart';
+import '../network/api_client.dart';
 
 class MockAuthRepository {
   final Map<String, String> _users = {
@@ -74,7 +76,10 @@ class MockAuthRepository {
   }
 }
 
-class MockJournalRepository {
+class MockJournalRepository extends JournalRepository {
+  MockJournalRepository() : super(ApiClient());
+
+  @override
   final List<Category> categories = [
     const Category(categoryId: 'cat-1', name: 'Personal'),
     const Category(categoryId: 'cat-2', name: 'Work'),
@@ -82,6 +87,7 @@ class MockJournalRepository {
     const Category(categoryId: 'cat-4', name: 'Travel'),
   ];
 
+  @override
   final List<Tag> tags = [
     const Tag(tagId: 'tag-1', name: 'grateful'),
     const Tag(tagId: 'tag-2', name: 'brainstorming'),
@@ -90,6 +96,16 @@ class MockJournalRepository {
     const Tag(tagId: 'tag-5', name: 'reflections'),
   ];
 
+  @override
+  Future<void> loadMetadata() async {}
+
+  @override
+  Future<List<Category>> fetchCategories() async => categories;
+
+  @override
+  Future<List<Tag>> fetchTags() async => tags;
+
+  @override
   Future<Category> createCategory(String name) async {
     await Future.delayed(const Duration(milliseconds: 200));
     final newCat = Category(categoryId: 'cat-${DateTime.now().millisecondsSinceEpoch}', name: name);
@@ -208,7 +224,8 @@ class MockJournalRepository {
     return updated;
   }
 
-  Future<void> deleteEntry(String journalId) async {
+  @override
+  Future<void> deleteEntry(String journalId, {bool permanent = false}) async {
     await Future.delayed(const Duration(milliseconds: 300));
     _entries.removeWhere((e) => e.journalId == journalId);
   }
