@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import logger from './config/logger.js';
 import { globalLimiter } from './middleware/rateLimiter.js';
 import { ApiError, errorConverter, errorHandler } from './middleware/errorHandler.js';
+import authRoutes from './routes/authRoutes.js';
 
 const app = express();
 
@@ -41,6 +42,9 @@ app.get('/api/v1/health', (req, res) => {
     message: 'Journal Hub API service is active'
   });
 });
+
+// Authentication APIs
+app.use('/api/v1/auth', authRoutes);
 
 // Fallback for undefined routes -> throw 404 ApiError
 app.use((req, res, next) => {

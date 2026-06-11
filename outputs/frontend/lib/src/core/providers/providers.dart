@@ -4,10 +4,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:state_notifier/state_notifier.dart';
 import '../models/models.dart';
 import '../repositories/mock_repositories.dart';
+import '../network/api_client.dart';
+import '../repositories/auth_repository.dart';
 
 // 1. Repository Providers
-final authRepositoryProvider = Provider<MockAuthRepository>((ref) {
-  return MockAuthRepository();
+final apiClientProvider = Provider<ApiClient>((ref) {
+  return ApiClient();
+});
+
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return AuthRepository(apiClient);
 });
 
 final journalRepositoryProvider = Provider<MockJournalRepository>((ref) {
@@ -24,7 +31,7 @@ final exportRepositoryProvider = Provider<MockExportRepository>((ref) {
 
 // 2. Auth State Provider
 class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
-  final MockAuthRepository _repo;
+  final AuthRepository _repo;
   AuthNotifier(this._repo) : super(const AsyncValue.data(null));
 
   Future<void> login(String email, String password) async {
@@ -37,13 +44,15 @@ class AuthNotifier extends StateNotifier<AsyncValue<User?>> {
     }
   }
 
-  Future<void> register(String fullName, String email, String password) async {
+  Future<User> register(String fullName, String email, String password) async {
     state = const AsyncValue.loading();
     try {
       final user = await _repo.register(fullName, email, password);
-      state = AsyncValue.data(user);
+      state = const AsyncValue.data(null);
+      return user;
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
+      rethrow;
     }
   }
 

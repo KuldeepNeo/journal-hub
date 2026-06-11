@@ -3,13 +3,40 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:journal_app/src/app.dart';
 import 'package:journal_app/src/config/router.dart';
+import 'package:journal_app/src/core/models/models.dart';
+import 'package:journal_app/src/core/network/api_client.dart';
+import 'package:journal_app/src/core/repositories/auth_repository.dart';
+import 'package:journal_app/src/core/providers/providers.dart';
+
+class TestAuthRepository extends AuthRepository {
+  TestAuthRepository() : super(ApiClient());
+
+  @override
+  Future<User> register(String fullName, String email, String password) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    return User(
+      userId: 'user-new-test',
+      fullName: fullName,
+      email: email,
+      accountStatus: 'Pending',
+    );
+  }
+
+  @override
+  Future<void> verifyEmail(String token) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+}
 
 void main() {
   testWidgets('App login flow and dashboard rendering smoke test', (WidgetTester tester) async {
     // Build our app under ProviderScope and trigger a frame.
     await tester.pumpWidget(
-      const ProviderScope(
-        child: JournalApp(),
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(TestAuthRepository()),
+        ],
+        child: const JournalApp(),
       ),
     );
 
@@ -43,10 +70,13 @@ void main() {
     expect(find.text('Writing Streak'), findsOneWidget);
   });
 
-  testWidgets('App signup flow and auto-login dashboard rendering test', (WidgetTester tester) async {
+  testWidgets('App signup flow and verification redirect test', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: JournalApp(),
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(TestAuthRepository()),
+        ],
+        child: const JournalApp(),
       ),
     );
     
@@ -75,20 +105,39 @@ void main() {
     // Tap 'Sign Up' button
     await tester.tap(find.text('Sign Up'));
 
-    // Settle for latency (800ms)
-    await tester.pump(const Duration(milliseconds: 900));
+    // Settle for register latency (100ms)
+    await tester.pump(const Duration(milliseconds: 150));
     await tester.pumpAndSettle();
 
-    // Verify we navigated to dashboard and see the welcome message with name
-    expect(find.textContaining('Hello, Alice Smith'), findsOneWidget);
-    expect(find.text('Capture your thoughts and track your journey.'), findsOneWidget);
-    expect(find.text('Writing Streak'), findsOneWidget);
+    // Verify the verification dialog is displayed
+    expect(find.text('Verify Your Email'), findsOneWidget);
+    expect(find.textContaining('We have sent a verification code to alice@example.com.'), findsOneWidget);
+
+    // Find token textfield and enter code
+    final dialogTextField = find.descendant(of: find.byType(AlertDialog), matching: find.byType(TextField));
+    expect(dialogTextField, findsOneWidget);
+    await tester.enterText(dialogTextField, 'token123');
+    await tester.pumpAndSettle();
+
+    // Tap "Verify"
+    await tester.tap(find.text('Verify'));
+
+    // Settle for verify latency (100ms)
+    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pumpAndSettle();
+
+    // Verify we navigated back to Login screen and see the success SnackBar
+    expect(find.text('Access your private digital journal'), findsOneWidget);
+    expect(find.text('Email verified successfully! You can now log in.'), findsOneWidget);
   });
 
   testWidgets('Settings screen add category test', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: JournalApp(),
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(TestAuthRepository()),
+        ],
+        child: const JournalApp(),
       ),
     );
 

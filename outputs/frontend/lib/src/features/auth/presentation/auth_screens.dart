@@ -222,13 +222,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
-  void _handleRegister() {
+  void _handleRegister() async {
     if (_formKey.currentState!.validate()) {
-      ref.read(authProvider.notifier).register(
-            _nameController.text.trim(),
-            _emailController.text.trim(),
-            _passwordController.text,
-          );
+      try {
+        final email = _emailController.text.trim();
+        final user = await ref.read(authProvider.notifier).register(
+              _nameController.text.trim(),
+              email,
+              _passwordController.text,
+            );
+        if (mounted) {
+          _showVerificationDialog(email);
+        }
+      } catch (_) {
+        // Handled by riverpod error state listener
+      }
     }
   }
 
@@ -248,11 +256,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ),
           );
           ref.read(authProvider.notifier).clearError();
-        },
-        data: (user) {
-          if (user != null) {
-            context.go('/');
-          }
         },
       );
     });
@@ -398,7 +401,104 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
+  void _showVerificationDialog(String email) {
+    final tokenController = TextEditingController();
+    bool isVerifying = false;
 
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Row(
+                children: [
+                  Icon(Icons.mark_email_unread_outlined, color: Colors.teal),
+                  SizedBox(width: 12),
+                  Text('Verify Your Email'),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'We have sent a verification code to $email.\n\n'
+                    'Please enter the verification token below to verify your account.',
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: tokenController,
+                    decoration: const InputDecoration(
+                      labelText: 'Verification Token',
+                      hintText: 'Enter token from logs',
+                      prefixIcon: Icon(Icons.key_rounded),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isVerifying ? null : () {
+                    Navigator.of(ctx).pop();
+                    context.go('/login');
+                  },
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: isVerifying ? null : () async {
+                    final token = tokenController.text.trim();
+                    if (token.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Verification token is required.'),
+                          backgroundColor: Colors.orangeAccent,
+                        ),
+                      );
+                      return;
+                    }
+                    setState(() => isVerifying = true);
+                    try {
+                      final repo = ref.read(authRepositoryProvider);
+                      await repo.verifyEmail(token);
+                      if (mounted) {
+                        Navigator.of(ctx).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Email verified successfully! You can now log in.'),
+                            backgroundColor: Colors.teal,
+                          ),
+                        );
+                        context.go('/login');
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        setState(() => isVerifying = false);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Verification failed: ${e.toString().replaceAll('Exception: ', '')}'),
+                            backgroundColor: Colors.redAccent,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: isVerifying
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Verify'),
+                ),
+              ],
+            );
+          }
+        );
+      },
+    );
+  }
 }
 
 // ----------------------------------------------------
