@@ -1,6 +1,7 @@
 import 'dart:async';
 import '../models/models.dart';
 import 'journal_repository.dart';
+import 'analytics_repository.dart';
 import '../network/api_client.dart';
 
 class MockAuthRepository {
@@ -292,7 +293,10 @@ class MockJournalRepository extends JournalRepository {
   }
 }
 
-class MockAnalyticsRepository {
+class MockAnalyticsRepository extends AnalyticsRepository {
+  MockAnalyticsRepository() : super(ApiClient());
+
+  @override
   Future<AnalyticsData> getAnalytics(List<JournalEntry> entries) async {
     await Future.delayed(const Duration(milliseconds: 400));
     

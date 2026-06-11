@@ -8,6 +8,7 @@ import '../network/api_client.dart';
 import '../repositories/auth_repository.dart';
 import '../repositories/draft_repository.dart';
 import '../repositories/journal_repository.dart';
+import '../repositories/analytics_repository.dart';
 import '../../config/router.dart';
 
 // 1. Repository Providers
@@ -30,8 +31,9 @@ final journalRepositoryProvider = Provider<JournalRepository>((ref) {
   return JournalRepository(apiClient);
 });
 
-final analyticsRepositoryProvider = Provider<MockAnalyticsRepository>((ref) {
-  return MockAnalyticsRepository();
+final analyticsRepositoryProvider = Provider<AnalyticsRepository>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return AnalyticsRepository(apiClient);
 });
 
 final exportRepositoryProvider = Provider<MockExportRepository>((ref) {

@@ -1,5 +1,6 @@
 import express from 'express';
 import journalController from '../controllers/journalController.js';
+import shareController from '../controllers/shareController.js';
 import journalValidation from '../validation/journalValidation.js';
 import authMiddleware from '../middleware/authMiddleware.js';
 
@@ -31,5 +32,9 @@ router.put(
 );
 
 router.delete('/:journalId', journalController.deleteJournal);
+
+// Sharing endpoints
+router.post('/:journalId/share', shareController.generateShareLink);
+router.delete('/:journalId/share', shareController.revokeShareLink);
 
 export default router;

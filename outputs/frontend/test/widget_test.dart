@@ -78,6 +78,7 @@ void main() {
         overrides: [
           authRepositoryProvider.overrideWithValue(TestAuthRepository()),
           journalRepositoryProvider.overrideWithValue(MockJournalRepository()),
+          analyticsRepositoryProvider.overrideWithValue(MockAnalyticsRepository()),
         ],
         child: const JournalApp(),
       ),
@@ -119,6 +120,7 @@ void main() {
         overrides: [
           authRepositoryProvider.overrideWithValue(TestAuthRepository()),
           journalRepositoryProvider.overrideWithValue(MockJournalRepository()),
+          analyticsRepositoryProvider.overrideWithValue(MockAnalyticsRepository()),
         ],
         child: const JournalApp(),
       ),
@@ -181,6 +183,7 @@ void main() {
         overrides: [
           authRepositoryProvider.overrideWithValue(TestAuthRepository()),
           journalRepositoryProvider.overrideWithValue(MockJournalRepository()),
+          analyticsRepositoryProvider.overrideWithValue(MockAnalyticsRepository()),
         ],
         child: const JournalApp(),
       ),
@@ -259,6 +262,7 @@ void main() {
         overrides: [
           authRepositoryProvider.overrideWithValue(TestAuthRepository()),
           journalRepositoryProvider.overrideWithValue(MockJournalRepository()),
+          analyticsRepositoryProvider.overrideWithValue(MockAnalyticsRepository()),
         ],
         child: const JournalApp(),
       ),
@@ -301,6 +305,7 @@ void main() {
         overrides: [
           authRepositoryProvider.overrideWithValue(TestAuthRepository()),
           journalRepositoryProvider.overrideWithValue(MockJournalRepository()),
+          analyticsRepositoryProvider.overrideWithValue(MockAnalyticsRepository()),
         ],
         child: const JournalApp(),
       ),

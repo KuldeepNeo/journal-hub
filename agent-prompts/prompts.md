@@ -868,3 +868,104 @@ Include:
 Do not implement new features, refactor unrelated code, or modify approved workflows. Focus only on resolving QA findings and preparing the module for QA re-validation.
 
 ---
+
+# Sprint 4 Modules Backend Implementation
+
+## Module 8: Journal Sharing
+## Module 9: Analytics Dashboard
+
+
+## Role
+
+Act as the Backend Engineer.
+
+Read:
+
+* [backend-developer.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/personas/backend-developer.md) 
+* [save-token.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/md-files/save-token.md) 
+
+## Action
+
+Implement the backend for Sprint 4 :- Module 8,9
+
+Only work on this module.
+
+Complete:
+
+* Database changes
+* Models
+* Repositories
+* Services
+* API endpoints
+* Validation
+* Security
+* Unit tests
+
+## Context
+
+Frontend screens already exist.
+
+API contracts must support existing UI without requiring UI redesign.
+
+## Execute
+
+Provide:
+
+* Architecture decisions
+* Files created/updated
+* Database changes
+* API endpoints
+* Test coverage
+* Postman/API examples
+
+Stop when the module is fully implemented and ready for QA testing.
+
+---
+
+# Sprint 4 Modules Frontend Implementation
+
+## Module 8: Journal Sharing
+## Module 9: Analytics Dashboard
+
+## Role
+
+Act as Senior Flutter Developer.
+
+Read:
+
+* [flutter-developer.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/personas/flutter-developer.md) 
+* [save-token.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/md-files/save-token.md) 
+
+## Action
+
+Replace mock data for Sprint 4 :- Module 8,9
+
+
+Connect the UI to the real backend APIs.
+
+## Context
+
+UI already exists and workflow has been validated using mock data.
+
+Do not redesign screens.
+
+## Execute
+
+* Replace mock repositories
+* Connect APIs
+* Handle loading states
+* Handle error states
+* Validate forms
+* Update state management
+
+Provide:
+
+* Files modified
+* APIs connected
+* Test results
+* Remaining blockers
+
+---
+
+# Sprint 4 Modules QA Testing
+
