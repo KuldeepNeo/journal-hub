@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import logger from './config/logger.js';
 import { globalLimiter } from './middleware/rateLimiter.js';
 import { ApiError, errorConverter, errorHandler } from './middleware/errorHandler.js';
+import path from 'path';
 import authRoutes from './routes/authRoutes.js';
 import draftRoutes from './routes/draftRoutes.js';
 import journalRoutes from './routes/journalRoutes.js';
@@ -13,6 +14,7 @@ import tagRoutes from './routes/tagRoutes.js';
 import calendarRoutes from './routes/calendarRoutes.js';
 import shareRoutes from './routes/shareRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
+import exportRoutes from './routes/exportRoutes.js';
 
 const app = express();
 
@@ -73,6 +75,12 @@ app.use('/api/v1/share', shareRoutes);
 
 // Analytics APIs
 app.use('/api/v1/analytics', analyticsRoutes);
+
+// Export APIs
+app.use('/api/v1/export', exportRoutes);
+
+// Serve static export files
+app.use('/exports', express.static(path.join(process.cwd(), 'public/exports')));
 
 // Fallback for undefined routes -> throw 404 ApiError
 app.use((req, res, next) => {

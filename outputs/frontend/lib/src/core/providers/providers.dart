@@ -9,6 +9,7 @@ import '../repositories/auth_repository.dart';
 import '../repositories/draft_repository.dart';
 import '../repositories/journal_repository.dart';
 import '../repositories/analytics_repository.dart';
+import '../repositories/export_repository.dart';
 import '../../config/router.dart';
 
 // 1. Repository Providers
@@ -36,8 +37,9 @@ final analyticsRepositoryProvider = Provider<AnalyticsRepository>((ref) {
   return AnalyticsRepository(apiClient);
 });
 
-final exportRepositoryProvider = Provider<MockExportRepository>((ref) {
-  return MockExportRepository();
+final exportRepositoryProvider = Provider<ExportRepository>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  return ExportRepository(apiClient);
 });
 
 // 2. Auth State Provider
@@ -277,9 +279,8 @@ final calendarEntriesProvider = FutureProvider.family<List<JournalEntry>, DateTi
   );
 });
 
-// 8. Exports Provider
 class ExportsNotifier extends StateNotifier<List<ExportJob>> {
-  final MockExportRepository _repo;
+  final ExportRepository _repo;
   Timer? _pollingTimer;
 
   ExportsNotifier(this._repo) : super([]) {
@@ -305,7 +306,18 @@ class ExportsNotifier extends StateNotifier<List<ExportJob>> {
     try {
       await _repo.requestExport(format);
       await _refreshJobs();
-    } catch (_) {}
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> retryExport(String exportId) async {
+    try {
+      await _repo.retryExport(exportId);
+      await _refreshJobs();
+    } catch (e) {
+      rethrow;
+    }
   }
 }
 

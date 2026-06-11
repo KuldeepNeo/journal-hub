@@ -193,8 +193,8 @@
 | KPI-086    | Navigation remains usable on small screens           | Verify menus, journal list, editor, and analytics remain accessible                     |
 | KPI-087    | Responsive layout adapts without content overlap     | Test multiple viewport sizes and verify layout integrity                                |
 | KPI-088    | Touch interactions function correctly                | Verify taps, scrolling, calendar selection, and editor interactions operate as expected |
-| KPI-089    | Mobile journal creation workflow is fully functional | Create, edit, search, and delete entries from mobile device and verify success          |
-| KPI-090    | Mobile pages meet page load KPI                      | Verify page load time remains below 2 seconds on supported mobile devices               |
+| KPI-089    | Journal creation workflow is fully functional        | Create, edit, search, and delete entries from mobile device, Web Portal and verify success          |
+| KPI-090    | Mobile and Web Portal pages meet page load KPI       | Verify page load time remains below 2 seconds on supported mobile devices and Web Portal               |
 
 ---
 

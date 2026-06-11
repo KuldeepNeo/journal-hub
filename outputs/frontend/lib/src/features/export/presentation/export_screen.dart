@@ -15,7 +15,40 @@ class ExportScreen extends ConsumerWidget {
         duration: const Duration(seconds: 1),
       ),
     );
-    await ref.read(exportsProvider.notifier).requestExport(format);
+    try {
+      await ref.read(exportsProvider.notifier).requestExport(format);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Export failed: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  void _retryExport(BuildContext context, WidgetRef ref, ExportJob job) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Retrying export job ${job.exportId.substring(job.exportId.length - 5)}...'),
+        backgroundColor: Colors.orange,
+        duration: const Duration(seconds: 1),
+      ),
+    );
+    try {
+      await ref.read(exportsProvider.notifier).retryExport(job.exportId);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Retry failed: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
   }
 
   void _mockDownloadFile(BuildContext context, ExportJob job) {
@@ -177,7 +210,7 @@ class ExportScreen extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   // Show newer jobs first
                   final job = exportJobs[exportJobs.length - 1 - index];
-                  return _buildJobTile(context, job, theme);
+                  return _buildJobTile(context, ref, job, theme);
                 },
               ),
           ],
@@ -241,7 +274,7 @@ class ExportScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildJobTile(BuildContext context, ExportJob job, ThemeData theme) {
+  Widget _buildJobTile(BuildContext context, WidgetRef ref, ExportJob job, ThemeData theme) {
     Color statusColor;
     IconData statusIcon;
     bool isProcessing = false;
@@ -327,7 +360,19 @@ class ExportScreen extends ConsumerWidget {
                   textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               )
-            : null,
+            : job.status == 'Failed'
+                ? ElevatedButton.icon(
+                    onPressed: () => _retryExport(context, ref, job),
+                    icon: const Icon(Icons.replay_rounded, size: 14),
+                    label: const Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                      textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
+                  )
+                : null,
       ),
     );
   }

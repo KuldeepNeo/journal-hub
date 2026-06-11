@@ -18,6 +18,7 @@ describe('Journal Management APIs', () => {
   beforeAll(async () => {
     // Re-initialize database schema
     await initDatabase(false);
+    await db.run('DELETE FROM User;');
 
     // Hash password
     const passwordHash = await bcrypt.hash('Password123!', 10);

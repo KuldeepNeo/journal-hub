@@ -147,11 +147,73 @@ Resolved all 3 defects reported in the QA defect report for Sprint 3 (Module 6 &
 | `outputs/backend/src/routes/journalRoutes.js` | Modified | DEF-M6-001 |
 | `outputs/backend/src/middleware/errorHandler.js` | Modified | DEF-M6-003 |
 
-### Test Results After Fixes
+### Test Results After Sprint 3 Fixes
 
 | Test Suite | Tests | Passed | Failed |
 |------------|-------|--------|--------|
 | Backend (Jest) | 74 | 74 | 0 |
 | Frontend (Flutter) | 5 | 5 | 0 |
 | **Total** | **79** | **79** | **0** |
+
+---
+
+## Sprint 5 — Module 10: Data Export / Module 11: Draft Preservation & Offline Handling
+
+### Overview
+
+Resolved all 3 defects reported in the QA defect report for Sprint 5 (Module 10 & Module 11). All changes were verified through the backend Jest integration test suite (100 tests), the frontend Flutter test suite, and manual workflow inspection.
+
+### Summary Metrics
+
+- **Total Issues Received**: 3
+- **Issues Fixed**: 3
+- **Remaining Issues**: 0
+- **Ready for QA Retest**: Yes
+
+### Findings & Resolution Details
+
+#### DEF-M10-001: PDF and DOCX export files are generated as plain-text files with incorrect extensions
+- **Root Cause**: The background export generation process wrote plain ASCII text report details directly to files on disk without compiling standard portable document structures (PDF) or zipped XML packages (DOCX).
+- **Files Modified/Created**:
+  - [`exportService.js`](file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/outputs/backend/src/services/exportService.js) — Integrated `pdfkit` to compile binary PDF documents containing headers, metadata, and list elements, and `docx` to package Word documents using correct paragraphs, tables, and spacing.
+- **Verification**:
+  - Updated Jest checks in `export.test.js` to verify binary stream signatures (e.g. `%PDF-` signature) in download responses. All backend tests pass successfully.
+
+#### DEF-M10-002: JSON format card displayed in UI but request is rejected by backend with 400
+- **Root Cause**: The validation schema, repository queries, and service handlers strictly limited export formats to `PDF` and `DOCX`. Additionally, the SQLite database table `ExportRequest` had a CHECK constraint (`export_format IN ('PDF', 'DOCX')`), which rejected `JSON` payloads.
+- **Files Modified**:
+  - [`exportValidation.js`](file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/outputs/backend/src/validation/exportValidation.js) — Added `'JSON'` to format validation lists.
+  - [`exportService.js`](file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/outputs/backend/src/services/exportService.js) — Implemented JSON file serialization for active journal entries.
+  - [`schema.sql`](file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/outputs/backend/src/config/schema.sql) — Updated `ExportRequest` CHECK constraint to include `'JSON'`.
+  - [`initDb.js`](file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/outputs/backend/src/config/initDb.js) — Implemented schema dropping logic during test execution to ensure updated DB constraints are applied.
+- **Verification**:
+  - Added a test case in `export.test.js` to request JSON formatting, wait for background completion, read the JSON file from disk, and assert structural and array completeness.
+
+#### DEF-M11-001: No explicit user warning dialog/snackbar displayed when remote auto-save fails
+- **Root Cause**: The background auto-save routine in the journal editor caught network synchronization errors silently, switching the header text to "Local draft saved" without showing a warning.
+- **Files Modified**:
+  - [`editor_screen.dart`](file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/outputs/frontend/lib/src/features/journal/presentation/editor_screen.dart) — Added state flag tracking (`_hasShownOfflineAlert`) to emit a single orange SnackBar warning (`"Auto-save failed: Storing draft locally (offline)"`) upon entering the offline save state.
+  - Updated the App Bar status layout to render the `Icons.cloud_off_rounded` icon and orange accent styling when the editor state is in local draft mode.
+- **Verification**:
+  - Checked editor state transitions. Flutter widget tests pass successfully.
+
+### Files Changed
+
+| File | Change Type | Defect |
+|------|-------------|--------|
+| `outputs/backend/src/services/exportService.js` | Modified | DEF-M10-001, DEF-M10-002 |
+| `outputs/backend/src/validation/exportValidation.js` | Modified | DEF-M10-002 |
+| `outputs/backend/src/config/schema.sql` | Modified | DEF-M10-002 |
+| `outputs/backend/src/config/initDb.js` | Modified | DEF-M10-002 |
+| `outputs/backend/tests/export.test.js` | Modified | DEF-M10-001, DEF-M10-002 |
+| `outputs/frontend/lib/src/features/journal/presentation/editor_screen.dart` | Modified | DEF-M11-001 |
+
+### Test Results After Sprint 5 Fixes
+
+| Test Suite | Tests | Passed | Failed |
+|------------|-------|--------|--------|
+| Backend (Jest) | 100 | 100 | 0 |
+| Frontend (Flutter Widget) | 5 | 5 | 0 |
+| **Total** | **105** | **105** | **0** |
+
 

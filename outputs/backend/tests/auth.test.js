@@ -7,6 +7,7 @@ describe('Auth Integration Tests', () => {
   beforeAll(async () => {
     // Re-initialize database schema for testing (do not seed, we will write custom tests)
     await initDatabase(false);
+    await db.run('DELETE FROM User;');
   });
 
   afterAll(async () => {

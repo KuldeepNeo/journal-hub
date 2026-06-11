@@ -17,6 +17,7 @@ describe('Journal Sharing APIs (Module 8)', () => {
   beforeAll(async () => {
     // Re-initialize database schema
     await initDatabase(false);
+    await db.run('DELETE FROM User;');
 
     // Hash password
     const passwordHash = await bcrypt.hash('Password123!', 10);

@@ -34,6 +34,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   String _saveStatus = 'Draft saved'; // 'Saving...', 'Draft saved', 'Modified'
   JournalEntry? _existingEntry;
   String? _draftId;
+  bool _hasShownOfflineAlert = false;
 
   @override
   void initState() {
@@ -158,7 +159,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   }
 
   void _markModified() {
-    if (_saveStatus == 'Draft saved' || _saveStatus == 'Draft loaded' || _saveStatus == 'Draft recovered') {
+    if (_saveStatus == 'Draft saved' || _saveStatus == 'Draft loaded' || _saveStatus == 'Draft recovered' || _saveStatus == 'Local draft saved') {
       setState(() {
         _saveStatus = 'Unsaved changes';
       });
@@ -200,6 +201,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         setState(() {
           _draftId = result['draftId'];
           _saveStatus = 'Draft saved';
+          _hasShownOfflineAlert = false;
         });
       }
     } catch (_) {
@@ -207,6 +209,16 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         setState(() {
           _saveStatus = 'Local draft saved';
         });
+        if (!_hasShownOfflineAlert) {
+          _hasShownOfflineAlert = true;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Auto-save failed: Storing draft locally (offline)'),
+              backgroundColor: Colors.orangeAccent,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
       }
     }
   }
@@ -314,13 +326,17 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                         ? Icons.sync_rounded
                         : _saveStatus == 'Draft saved' || _saveStatus == 'Draft loaded'
                             ? Icons.check_circle_outline_rounded
-                            : Icons.edit_note_rounded,
+                            : _saveStatus == 'Local draft saved'
+                                ? Icons.cloud_off_rounded
+                                : Icons.edit_note_rounded,
                     size: 16,
                     color: _saveStatus == 'Saving...'
                         ? theme.colorScheme.primary
                         : _saveStatus == 'Draft saved' || _saveStatus == 'Draft loaded'
                             ? Colors.green
-                            : theme.colorScheme.onSurface.withOpacity(0.4),
+                            : _saveStatus == 'Local draft saved'
+                                ? Colors.orangeAccent
+                                : theme.colorScheme.onSurface.withOpacity(0.4),
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -331,7 +347,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                           ? theme.colorScheme.primary
                           : _saveStatus == 'Draft saved' || _saveStatus == 'Draft loaded'
                               ? Colors.green
-                              : theme.colorScheme.onSurface.withOpacity(0.5),
+                              : _saveStatus == 'Local draft saved'
+                                  ? Colors.orangeAccent
+                                  : theme.colorScheme.onSurface.withOpacity(0.5),
                     ),
                   ),
                 ],
