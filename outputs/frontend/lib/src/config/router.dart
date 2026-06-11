@@ -1,139 +1,82 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../features/auth/presentation/auth_screens.dart';
+import '../features/dashboard/presentation/dashboard_screen.dart';
+import '../features/dashboard/presentation/main_shell.dart';
+import '../features/journal/presentation/calendar_screen.dart';
+import '../features/journal/presentation/editor_screen.dart';
+import '../features/journal/presentation/entries_screen.dart';
+import '../features/journal/presentation/entry_details_screen.dart';
+import '../features/analytics/presentation/analytics_screen.dart';
+import '../features/export/presentation/export_screen.dart';
+import '../features/settings/presentation/settings_screen.dart';
 
 final goRouter = GoRouter(
   initialLocation: '/login', // Start at login for security/session check flow
   routes: [
     GoRoute(
       path: '/login',
-      builder: (context, state) => const LoginScreenPlaceholder(),
+      builder: (context, state) => const LoginScreen(),
     ),
     GoRoute(
-      path: '/',
-      builder: (context, state) => const HomeScreenPlaceholder(),
+      path: '/register',
+      builder: (context, state) => const RegisterScreen(),
+    ),
+    GoRoute(
+      path: '/forgot-password',
+      builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+    ShellRoute(
+      builder: (context, state, child) {
+        return MainNavigationShell(child: child);
+      },
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const DashboardScreen(),
+        ),
+        GoRoute(
+          path: '/journals',
+          builder: (context, state) => const EntriesScreen(),
+        ),
+        GoRoute(
+          path: '/journals/create',
+          builder: (context, state) {
+            final prompt = state.uri.queryParameters['prompt'];
+            return EditorScreen(initialPrompt: prompt);
+          },
+        ),
+        GoRoute(
+          path: '/journals/:id',
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            return EntryDetailsScreen(entryId: id);
+          },
+        ),
+        GoRoute(
+          path: '/journals/:id/edit',
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            return EditorScreen(entryId: id);
+          },
+        ),
+        GoRoute(
+          path: '/calendar',
+          builder: (context, state) => const CalendarScreen(),
+        ),
+        GoRoute(
+          path: '/analytics',
+          builder: (context, state) => const AnalyticsScreen(),
+        ),
+        GoRoute(
+          path: '/export',
+          builder: (context, state) => const ExportScreen(),
+        ),
+        GoRoute(
+          path: '/settings',
+          builder: (context, state) => const SettingsScreen(),
+        ),
+      ],
     ),
   ],
 );
-
-class LoginScreenPlaceholder extends StatelessWidget {
-  const LoginScreenPlaceholder({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(32.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.auto_stories_rounded,
-                        size: 48,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Journal Hub',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Write your story, secure and private.',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => context.go('/'),
-                        child: const Text('Enter Application'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class HomeScreenPlaceholder extends StatelessWidget {
-  const HomeScreenPlaceholder({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Icon(Icons.auto_stories_rounded, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
-            const Text('Journal Hub'),
-          ],
-        ),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            onPressed: () => context.go('/login'),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.dashboard_customize_rounded,
-                size: 64,
-                color: theme.colorScheme.primary.withOpacity(0.3),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Welcome Back',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Your development workspace is initialized and ready.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

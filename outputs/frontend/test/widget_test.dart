@@ -1,9 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:journal_app/src/app.dart';
+import 'package:journal_app/src/config/router.dart';
 
 void main() {
-  testWidgets('App navigation and rendering smoke test', (WidgetTester tester) async {
+  testWidgets('App login flow and dashboard rendering smoke test', (WidgetTester tester) async {
     // Build our app under ProviderScope and trigger a frame.
     await tester.pumpWidget(
       const ProviderScope(
@@ -11,22 +13,149 @@ void main() {
       ),
     );
 
-    // Allow GoRouter to resolve initial route (/login)
+    // Reset GoRouter location to /login to ensure test isolation
+    goRouter.go('/login');
     await tester.pumpAndSettle();
 
-    // Verify that the login screen placeholder is rendered
-    expect(find.text('Journal Hub'), findsOneWidget);
-    expect(find.text('Write your story, secure and private.'), findsOneWidget);
-    expect(find.text('Enter Application'), findsOneWidget);
+    // Verify that the login screen is rendered
+    expect(find.text('Access your private digital journal'), findsOneWidget);
+    expect(find.text('Login'), findsOneWidget);
 
-    // Tap the 'Enter Application' button
-    await tester.tap(find.text('Enter Application'));
+    // Find email and password inputs
+    final textFields = find.byType(TextField);
+    expect(textFields, findsNWidgets(2));
+
+    // Input credentials
+    await tester.enterText(textFields.at(0), 'verified@example.com');
+    await tester.enterText(textFields.at(1), 'Password123!');
+    await tester.pumpAndSettle();
+
+    // Tap the 'Login' button
+    await tester.tap(find.text('Login'));
     
-    // Animate transition and settle
+    // Settle for the simulated network latency (600ms)
+    await tester.pump(const Duration(milliseconds: 700));
     await tester.pumpAndSettle();
 
-    // Verify we navigated to the home screen
-    expect(find.text('Welcome Back'), findsOneWidget);
-    expect(find.text('Your development workspace is initialized and ready.'), findsOneWidget);
+    // Verify we navigated to the dashboard and see the welcome message
+    expect(find.textContaining('Hello, Jane Doe'), findsOneWidget);
+    expect(find.text('Capture your thoughts and track your journey.'), findsOneWidget);
+    expect(find.text('Writing Streak'), findsOneWidget);
+  });
+
+  testWidgets('App signup flow and auto-login dashboard rendering test', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: JournalApp(),
+      ),
+    );
+    
+    // Reset GoRouter location to /login to ensure test isolation
+    goRouter.go('/login');
+    await tester.pumpAndSettle();
+
+    // Navigate to registration
+    await tester.tap(find.text('Sign Up'));
+    await tester.pumpAndSettle();
+
+    // Verify Register screen is displayed
+    expect(find.text('Create Account'), findsOneWidget);
+    expect(find.text('Begin journaling securely today'), findsOneWidget);
+
+    final textFields = find.byType(TextField);
+    // Name, Email, Password, Confirm Password -> 4 TextFields
+    expect(textFields, findsNWidgets(4));
+
+    await tester.enterText(textFields.at(0), 'Alice Smith');
+    await tester.enterText(textFields.at(1), 'alice@example.com');
+    await tester.enterText(textFields.at(2), 'Password123!');
+    await tester.enterText(textFields.at(3), 'Password123!');
+    await tester.pumpAndSettle();
+
+    // Tap 'Sign Up' button
+    await tester.tap(find.text('Sign Up'));
+
+    // Settle for latency (800ms)
+    await tester.pump(const Duration(milliseconds: 900));
+    await tester.pumpAndSettle();
+
+    // Verify we navigated to dashboard and see the welcome message with name
+    expect(find.textContaining('Hello, Alice Smith'), findsOneWidget);
+    expect(find.text('Capture your thoughts and track your journey.'), findsOneWidget);
+    expect(find.text('Writing Streak'), findsOneWidget);
+  });
+
+  testWidgets('Settings screen add category test', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: JournalApp(),
+      ),
+    );
+
+    // Reset GoRouter location to /settings
+    goRouter.go('/settings');
+    await tester.pumpAndSettle();
+
+    // Verify Settings screen is displayed
+    expect(find.widgetWithText(AppBar, 'Settings'), findsOneWidget);
+    expect(find.text('Manage Categories'), findsOneWidget);
+
+    // Verify initial categories are displayed
+    expect(find.text('Personal'), findsOneWidget);
+    expect(find.text('Work'), findsOneWidget);
+
+    // Tap "Add" category button
+    await tester.tap(find.widgetWithText(TextButton, 'Add').first);
+    await tester.pumpAndSettle();
+
+    // Enter category name
+    await tester.enterText(find.byType(TextField), 'Health & Fitness');
+    await tester.pumpAndSettle();
+
+    // Tap "Create"
+    await tester.tap(find.text('Create'));
+    
+    // Settle for the 200ms repo delay
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    // Verify the new category is displayed
+    expect(find.text('Health & Fitness'), findsOneWidget);
+
+    // Test deleting a category
+    final workListTile = find.widgetWithText(ListTile, 'Work');
+    await tester.ensureVisible(workListTile);
+    final deleteCategoryButton = find.descendant(
+      of: workListTile,
+      matching: find.byType(IconButton),
+    );
+    await tester.tap(deleteCategoryButton);
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+    expect(find.text('Work'), findsNothing);
+
+    // Test adding a tag
+    final addTagButton = find.widgetWithText(TextButton, 'Add').last;
+    await tester.ensureVisible(addTagButton);
+    await tester.tap(addTagButton);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'mindfulness');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create'));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+    expect(find.text('#mindfulness'), findsOneWidget);
+
+    // Test deleting a tag
+    final gratefulChip = find.widgetWithText(Chip, '#grateful');
+    await tester.ensureVisible(gratefulChip);
+    final deleteTagButton = find.descendant(
+      of: gratefulChip,
+      matching: find.byType(Icon),
+    );
+    await tester.tap(deleteTagButton);
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+    expect(find.text('#grateful'), findsNothing);
   });
 }
