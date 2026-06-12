@@ -7,11 +7,12 @@ import userRepository from '../repositories/userRepository.js';
 import verificationRepository from '../repositories/verificationRepository.js';
 import sessionRepository from '../repositories/sessionRepository.js';
 import passwordResetRepository from '../repositories/passwordResetRepository.js';
+import auditRepository from '../repositories/auditRepository.js';
 import emailService from './emailService.js';
 import { ApiError } from '../middleware/errorHandler.js';
 
 export const authService = {
-  async registerUser({ fullName, email, password }) {
+  async registerUser({ fullName, email, password }, clientIp = null) {
     // 1. Check duplicate email
     const existingUser = await userRepository.findByEmail(email);
     if (existingUser) {
@@ -47,6 +48,9 @@ export const authService = {
     // 5. Skip email delivery for demo purposes
     // await emailService.sendVerificationEmail(email, token);
 
+    // Log audit for registration
+    await auditRepository.log(userId, 'User', userId, 'Register', clientIp);
+
     return user;
   },
 
@@ -75,7 +79,7 @@ export const authService = {
     };
   },
 
-  async loginUser({ email, password }) {
+  async loginUser({ email, password }, clientIp = null) {
     // 1. Fetch user by email
     const user = await userRepository.findByEmail(email);
     if (!user) {
@@ -121,6 +125,9 @@ export const authService = {
 
     // 6. Update user's last login timestamp
     await userRepository.updateLastLogin(user.user_id);
+
+    // Log audit for login
+    await auditRepository.log(user.user_id, 'User', user.user_id, 'Login', clientIp);
 
     return {
       accessToken,

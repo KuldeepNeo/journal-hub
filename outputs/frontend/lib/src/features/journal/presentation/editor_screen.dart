@@ -35,6 +35,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   JournalEntry? _existingEntry;
   String? _draftId;
   bool _hasShownOfflineAlert = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -246,11 +247,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     
     final journalsNotifier = ref.read(journalsProvider.notifier);
     
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       if (_existingEntry != null) {
@@ -277,7 +276,6 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       }
       
       if (mounted) {
-        Navigator.pop(context); // Pop loading dialog
         try {
           await ref.read(draftRepositoryProvider).clearLocalDraft(widget.entryId);
         } catch (_) {}
@@ -291,7 +289,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
       }
     } catch (e) {
       if (mounted) {
-        Navigator.pop(context); // Pop loading dialog
+        setState(() {
+          _isLoading = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to save: ${e.toString().replaceAll('Exception: ', '')}'),
@@ -357,7 +357,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
             ),
           ),
           ElevatedButton(
-            onPressed: _saveEntry,
+            onPressed: _isLoading ? null : _saveEntry,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
@@ -371,6 +371,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         key: _formKey,
         child: Column(
           children: [
+            if (_isLoading) const LinearProgressIndicator(),
             // Editor Toolbar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

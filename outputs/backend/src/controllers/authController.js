@@ -4,7 +4,8 @@ export const authController = {
   async register(req, res, next) {
     try {
       const { fullName, email, password } = req.body;
-      const user = await authService.registerUser({ fullName, email, password });
+      const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+      const user = await authService.registerUser({ fullName, email, password }, clientIp);
       res.status(201).json({
         userId: user.user_id,
         accountStatus: user.account_status,
@@ -97,7 +98,8 @@ export const authController = {
   async login(req, res, next) {
     try {
       const { email, password } = req.body;
-      const result = await authService.loginUser({ email, password });
+      const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+      const result = await authService.loginUser({ email, password }, clientIp);
       res.status(200).json(result);
     } catch (error) {
       next(error);

@@ -3,7 +3,8 @@ import journalService from '../services/journalService.js';
 export const journalController = {
   async createJournal(req, res, next) {
     try {
-      const journal = await journalService.createJournal(req.user.userId, req.body);
+      const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+      const journal = await journalService.createJournal(req.user.userId, req.body, clientIp);
       res.status(201).json(journal);
     } catch (err) {
       next(err);
@@ -42,10 +43,12 @@ export const journalController = {
 
   async updateJournal(req, res, next) {
     try {
+      const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
       const journal = await journalService.updateJournal(
         req.user.userId,
         req.params.journalId,
-        req.body
+        req.body,
+        clientIp
       );
       res.status(200).json(journal);
     } catch (err) {
@@ -56,10 +59,12 @@ export const journalController = {
   async deleteJournal(req, res, next) {
     try {
       const permanent = req.query.permanent === 'true';
+      const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
       const result = await journalService.deleteJournal(
         req.user.userId,
         req.params.journalId,
-        permanent
+        permanent,
+        clientIp
       );
       res.status(200).json(result);
     } catch (err) {

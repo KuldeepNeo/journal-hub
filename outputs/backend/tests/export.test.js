@@ -10,6 +10,19 @@ import config from '../src/config/environment.js';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const waitForStatus = async (exportId, statuses, maxMs = 3000) => {
+  const start = Date.now();
+  while (Date.now() - start < maxMs) {
+    const job = await db.get('SELECT export_status FROM ExportRequest WHERE export_id = ?;', [exportId]);
+    if (job && statuses.includes(job.export_status)) {
+      return job.export_status;
+    }
+    await sleep(50);
+  }
+  const job = await db.get('SELECT export_status FROM ExportRequest WHERE export_id = ?;', [exportId]);
+  return job ? job.export_status : null;
+};
+
 describe('Data Export APIs (Module 10)', () => {
   let user1Token;
   let user2Token;
@@ -103,8 +116,8 @@ describe('Data Export APIs (Module 10)', () => {
       expect(audit).toBeDefined();
       expect(audit.user_id).toBe(user1Id);
 
-      // Wait for background async queue to complete (50ms)
-      await sleep(60);
+      // Wait for background async queue to complete
+      await waitForStatus(exportId, ['Completed', 'Failed']);
 
       // Verify db request row has transitioned to Completed
       const completedJob = await db.get('SELECT * FROM ExportRequest WHERE export_id = ?;', [exportId]);
@@ -147,7 +160,7 @@ describe('Data Export APIs (Module 10)', () => {
       expect(res.statusCode).toBe(202);
       const exportId = res.body.exportId;
 
-      await sleep(60);
+      await waitForStatus(exportId, ['Completed', 'Failed']);
 
       const exportsDir = path.join(process.cwd(), 'public/exports');
       const filePath = path.join(exportsDir, `journal_export_${exportId}.json`);
@@ -268,8 +281,8 @@ describe('Data Export APIs (Module 10)', () => {
       expect(triggerRes.statusCode).toBe(202);
       failedExportId = triggerRes.body.exportId;
 
-      // Wait for background async queue to complete (50ms)
-      await sleep(60);
+      // Wait for background async queue to complete
+      await waitForStatus(failedExportId, ['Completed', 'Failed']);
 
       // Verify db request row has transitioned to Failed
       const failedJob = await db.get('SELECT * FROM ExportRequest WHERE export_id = ?;', [failedExportId]);
@@ -313,7 +326,7 @@ describe('Data Export APIs (Module 10)', () => {
       expect(audit).toBeDefined();
 
       // 4. Wait for retry processing
-      await sleep(60);
+      await waitForStatus(failedExportId, ['Completed', 'Failed']);
 
       // 5. Verify status has transitioned to Completed
       const completedJob = await db.get('SELECT * FROM ExportRequest WHERE export_id = ?;', [failedExportId]);

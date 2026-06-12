@@ -5,8 +5,11 @@ import config from './environment.js';
 import logger from './logger.js';
 
 // Resolve database file path
-const dbPath = path.resolve(config.db.path);
-const dbDir = path.dirname(dbPath);
+const originalDbPath = path.resolve(config.db.path);
+const dbDir = path.dirname(originalDbPath);
+const dbPath = process.env.NODE_ENV === 'test'
+  ? path.join(dbDir, 'journal_test.db')
+  : originalDbPath;
 
 // Create directory if it does not exist
 if (!fs.existsSync(dbDir)) {

@@ -1182,8 +1182,87 @@ Do not implement new features, refactor unrelated code, or modify approved workf
 
 ___
 
+# Debug & Fix Journal Entries Flow
 
-Sprint 6 Final QA & Production Readiness
+## Role
+
+Act as a Senior Flutter & Backend Engineer.
+
+Before making any changes, read and follow:
+
+* [backend-developer.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/personas/backend-developer.md) 
+* [flutter-developer.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/personas/flutter-developer.md) 
+* [save-token.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/md-files/save-token.md) 
+
+Adhere to all architecture, coding standards, debugging guidelines, and token-saving practices.
+
+---
+
+## Action
+
+Resolve the issues in the **Journal Entries** feature.
+
+Focus only on fixing defects. Do **not** introduce new features, refactor unrelated code, or modify approved workflows.
+
+---
+
+## Context
+
+The Journal Entries module has already been implemented and previously tested.
+
+### Reported Issue
+
+**Flow:**
+
+1. User logs into the application.
+2. User creates a new journal entry.
+3. User taps **Save**.
+4. A white screen appears.
+5. Returning to the app causes it to crash.
+
+Your objective is to identify the root cause, implement a fix.
+
+---
+
+## Execute
+
+### Investigation
+
+* Reproduce the issue.
+* Analyze logs, stack traces, and runtime exceptions.
+* Identify the root cause (Frontend, Backend, Navigation, API, State Management, Database, or Serialization).
+
+### Fix
+
+* Implement the minimum required fix.
+* Preserve existing functionality and architecture.
+* Ensure no regressions are introduced.
+
+### Deliverables
+
+Generate the following report:
+
+**outputs/qa-fixes-summary.md**
+
+Include:
+
+* Issue Summary
+* Root Cause Analysis
+* Files Modified
+* Fixes Implemented
+* Total Issues Received
+* Total Issues Fixed
+* Remaining Issues
+* Risks / Dependencies
+* Ready for QA Retest (Yes/No)
+
+Complete the task only when the Journal Entries flow is stable, crash-free, and ready for QA re-validation.
+
+
+---
+
+
+# Sprint 6 Final QA & Production Readiness
 
 ## Role
 
@@ -1262,5 +1341,233 @@ Final Verdict:
 * ❌ Not Ready for Production
 
 Follow [qa-engineer.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/personas/qa-engineer.md)  strictly throughout the execution and preserve progress using **save-token.md**.
+
+---
+
+# QA Lead Validation
+
+## Role
+
+Act as the QA Lead Engineer
+
+Before starting, read and follow:
+
+* [qa-lead-engineer.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/personas/qa-lead-engineer.md) 
+* [save-token.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/md-files/save-token.md)
+[master-kpi.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/md-files/master-kpi.md) 
+[execution-plan.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/md-files/execution-plan.md) 
+
+Adopt all QA standards, testing strategies, reporting guidelines, and token-saving practices.
+
+---
+
+## Action
+
+Perform a comprehensive quality assessment of the requested scope.
+
+Analyze the implementation and determine the most appropriate testing strategy. Select and execute the required testing mode(s) based on the current development stage, implementation status, and associated risks.
+
+Do not assume previous QA reports are correct. Validate the application independently.
+
+---
+
+## Context
+
+Scope:
+**[Feature / Module / Sprint / Entire Application]**
+
+Relevant documents:
+
+* PRD
+* Feature Catalogue
+* BDD Scenarios
+* Execution Plan
+* Master KPI
+* Previous QA Reports (if available)
+
+Frontend and backend implementations are available for testing.
+
+---
+
+## Execute
+
+### Phase 1 – Test Planning
+
+* Analyze the scope.
+* Identify dependencies.
+* Select appropriate testing mode(s).
+* Define test coverage.
+
+### Phase 2 – Test Execution
+
+Execute all selected testing modes while validating:
+
+* Business requirements
+* User workflows
+* UI/UX
+* Navigation
+* API integration
+* Data integrity
+* State management
+* Error handling
+* Edge cases
+* Performance
+* Security
+* Accessibility
+* Responsive behavior
+* Cross-module integration
+* Regression risks
+
+Attempt to discover hidden defects through exploratory testing and realistic user behavior.
+
+Continue testing until no additional critical issues are identified.
+
+### Phase 3 – Reporting
+
+Generate all applicable reports under:
+
+`outputs/testing-artifacts/qa-lead-engineer-report/`
+
+Examples include:
+
+* test-cases-report.md
+* defect-report.md
+* regression-report.md
+* exploratory-test-report.md
+* sanity-test-report.md
+* end-to-end-test-report.md
+* production-readiness-report.md
+* qa-fixes-summary.md
+
+Generate only the reports relevant to the selected testing strategy.
+
+---
+
+## Final Review
+
+Provide:
+
+* Test Coverage Summary
+* Defect Summary
+* Risk Assessment
+* Regression Impact
+* Overall Quality Score
+* Production Readiness Assessment
+* Recommended Developer Actions
+
+Final Verdict:
+
+* ✅ Approved for Release
+* ⚠️ Approved with Minor Issues
+* 🔄 Rework Required
+* ❌ Release Blocked
+
+Do not approve the application if any critical defects, major regressions, workflow failures, or release-blocking issues remain unresolved.
+
+---
+
+# Debug & Fix Journal Entries Flow
+
+## Role
+
+Act as a Senior Flutter & Backend Engineer.
+
+Before making any changes, read and follow:
+
+* [backend-developer.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/personas/backend-developer.md) 
+* [flutter-developer.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/personas/flutter-developer.md) 
+* [save-token.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/md-files/save-token.md) 
+
+Adhere to all architecture, coding standards, debugging guidelines, and token-saving practices.
+
+---
+
+## Action
+
+Debug and resolve the issues in the **Journal Entries** feature.
+
+Focus only on fixing defects. Do **not** introduce new features, refactor unrelated code, or modify approved workflows.
+
+After implementing fixes, perform end-to-end validation of the Journal Entries flow.
+
+---
+
+## Context
+
+The Journal Entries module has already been implemented and previously tested.
+
+### Reported Issue
+
+**Flow:**
+
+1. User logs into the application.
+2. User creates a new journal entry.
+3. User taps **Save**.
+4. A white screen appears.
+5. Returning to the app causes it to crash.
+
+Your objective is to identify the root cause, implement a fix, and ensure the complete flow works reliably without regressions.
+
+---
+
+## Execute
+
+### Investigation
+
+* Reproduce the issue.
+* Analyze logs, stack traces, and runtime exceptions.
+* Identify the root cause (Frontend, Backend, Navigation, API, State Management, Database, or Serialization).
+
+### Fix
+
+* Implement the minimum required fix.
+* Preserve existing functionality and architecture.
+* Ensure no regressions are introduced.
+
+### Validation
+
+Verify the complete workflow:
+
+* User Login
+* Create Journal Entry
+* Save Entry
+* Successful Navigation
+* Entry Persistence
+* Journal List Refresh
+* View Saved Entry
+* Edit Entry
+* Delete Entry (if applicable)
+* App Stability (no crashes or white screens)
+
+Also verify:
+
+* Loading states
+* Error handling
+* Navigation flow
+* State synchronization
+* API responses
+* Database persistence
+
+### Deliverables
+
+Generate the following report:
+
+**outputs/qa-fixes-summary.md**
+
+Include:
+
+* Issue Summary
+* Root Cause Analysis
+* Files Modified
+* Fixes Implemented
+* Validation Results
+* Regression Checks Performed
+* Total Issues Received
+* Total Issues Fixed
+* Remaining Issues
+* Risks / Dependencies
+* Ready for QA Retest (Yes/No)
+
+Complete the task only when the Journal Entries flow is stable, crash-free, and ready for QA re-validation.
 
 ---

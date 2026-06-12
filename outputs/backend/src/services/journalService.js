@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import journalRepository from '../repositories/journalRepository.js';
 import categoryRepository from '../repositories/categoryRepository.js';
 import tagRepository from '../repositories/tagRepository.js';
+import auditRepository from '../repositories/auditRepository.js';
 import { ApiError } from '../middleware/errorHandler.js';
 
 export const journalService = {
@@ -29,7 +30,7 @@ export const journalService = {
     }
   },
 
-  async createJournal(userId, data) {
+  async createJournal(userId, data, clientIp = null) {
     const { title, content, entryDate, categoryId, tags = [], isPrivate = true } = data;
 
     // Validate relationships
@@ -49,7 +50,9 @@ export const journalService = {
       isPrivate
     };
 
-    return journalRepository.createEntry(entryRecord, tags);
+    const result = await journalRepository.createEntry(entryRecord, tags);
+    await auditRepository.log(userId, 'JournalEntry', journalId, 'Create', clientIp);
+    return result;
   },
 
   async getJournal(userId, journalId) {
@@ -69,7 +72,7 @@ export const journalService = {
     return journalRepository.findByUser(userId, filters);
   },
 
-  async updateJournal(userId, journalId, data) {
+  async updateJournal(userId, journalId, data, clientIp = null) {
     const { title, content, entryDate, categoryId, tags, isPrivate, versionNumber } = data;
 
     const entry = await journalRepository.findById(journalId);
@@ -111,10 +114,12 @@ export const journalService = {
       isPrivate: updatedIsPrivate
     };
 
-    return journalRepository.updateEntry(entryRecord, updatedTags);
+    const result = await journalRepository.updateEntry(entryRecord, updatedTags);
+    await auditRepository.log(userId, 'JournalEntry', journalId, 'Update', clientIp);
+    return result;
   },
 
-  async deleteJournal(userId, journalId, permanent = false) {
+  async deleteJournal(userId, journalId, permanent = false, clientIp = null) {
     const entry = await journalRepository.findById(journalId);
     
     // Note: If hard-deleting, it's allowed even if already soft-deleted. If soft-deleting, must not be already soft-deleted.
@@ -131,6 +136,9 @@ export const journalService = {
     } else {
       await journalRepository.softDeleteEntry(journalId);
     }
+
+    // Log audit for deletion
+    await auditRepository.log(userId, 'JournalEntry', journalId, 'Delete', clientIp);
 
     return {
       message: permanent ? 'Journal entry permanently deleted' : 'Journal entry soft deleted'

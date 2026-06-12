@@ -204,6 +204,7 @@ class JournalsNotifier extends StateNotifier<AsyncValue<List<JournalEntry>>> {
       await loadEntries();
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
+      rethrow;
     }
   }
 
@@ -214,6 +215,7 @@ class JournalsNotifier extends StateNotifier<AsyncValue<List<JournalEntry>>> {
       await loadEntries();
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
+      rethrow;
     }
   }
 
@@ -224,6 +226,7 @@ class JournalsNotifier extends StateNotifier<AsyncValue<List<JournalEntry>>> {
       await loadEntries();
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
+      rethrow;
     }
   }
 }
