@@ -189,12 +189,12 @@
 
 | KPI Number | KPI                                                  | Validation Method                                                                       |
 | ---------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| KPI-085    | Application renders correctly on mobile devices      | Validate UI across supported mobile screen sizes and orientations                       |
+| KPI-085    | Application renders correctly on mobile, tablet, desktop devices      | Validate UI across supported devices screen sizes and orientations                       |
 | KPI-086    | Navigation remains usable on small screens           | Verify menus, journal list, editor, and analytics remain accessible                     |
 | KPI-087    | Responsive layout adapts without content overlap     | Test multiple viewport sizes and verify layout integrity                                |
 | KPI-088    | Touch interactions function correctly                | Verify taps, scrolling, calendar selection, and editor interactions operate as expected |
-| KPI-089    | Journal creation workflow is fully functional        | Create, edit, search, and delete entries from mobile device, Web Portal and verify success          |
-| KPI-090    | Mobile and Web Portal pages meet page load KPI       | Verify page load time remains below 2 seconds on supported mobile devices and Web Portal               |
+| KPI-089    | Journal creation workflow is fully functional        | Create, edit, search, and delete entries from mobile, tablet, and desktop devices, Web Portal and verify success          |
+| KPI-090    | Mobile, tablet, and desktop pages meet page load KPI       | Verify page load time remains below 2 seconds on supported devices and Web Portal               |
 
 ---
 

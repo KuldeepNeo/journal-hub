@@ -1181,3 +1181,86 @@ Do not implement new features, refactor unrelated code, or modify approved workf
 
 
 ___
+
+
+Sprint 6 Final QA & Production Readiness
+
+## Role
+
+Act as a Senior Quality Assurance Engineer.
+
+Read and follow:
+
+* [qa-engineer.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/personas/qa-engineer.md) 
+* [save-token.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/md-files/save-token.md) 
+
+Adopt all QA standards, testing guidelines, reporting formats, and token-saving practices.
+
+
+## Action
+
+Execute Sprint 6 for:
+
+* Module 12: Mobile Responsiveness & UX
+* Module 13: Security, Performance & Reliability
+
+Then perform a complete end-to-end application validation covering all 13 modules  and 100 KPIs.
+
+Use the following as the source of truth:
+
+* [master-kpi.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/md-files/master-kpi.md) 
+* [execution-plan.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/md-files/execution-plan.md) 
+
+Do not skip any KPI, feature, workflow, or acceptance criterion.
+
+
+## Context
+
+The frontend and backend implementations are complete.
+
+Your objective is to verify that the application is production-ready through comprehensive functional, integration, UI/UX, security, performance, reliability, regression, and end-to-end workflow testing.
+
+
+## Execute
+
+Generate:
+
+1. **test-cases-report.md**
+
+   * Test Case ID
+   * Module
+   * KPI Reference
+   * Scenario
+   * Expected Result
+   * Actual Result
+   * Status (PASS / FAIL)
+
+2. **defect-report.md**
+
+   * Defect ID
+   * Module
+   * Severity
+   * Priority
+   * Steps to Reproduce
+   * Expected vs Actual
+   * Impact
+   * Recommendation
+
+3. **production-readiness-report.md**
+
+   * KPI Coverage Summary
+   * Module-wise Summary
+   * Overall Pass Rate
+   * Open Defects
+   * Critical Risks
+   * Production Readiness Verdict
+
+Final Verdict:
+
+* ✅ Ready for Production
+* ⚠️ Ready with Minor Issues
+* ❌ Not Ready for Production
+
+Follow [qa-engineer.md](file;file:///Users/neo/Desktop/Vibe%20Coding%20Training/vibe_projects/journal-hub/agent-prompts/personas/qa-engineer.md)  strictly throughout the execution and preserve progress using **save-token.md**.
+
+---
